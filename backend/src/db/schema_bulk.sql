@@ -1,4 +1,4 @@
--- Apero MktPro Bulk Campaign Launcher Schema (Meta Marketing API & Google Ads UAC)
+-- PandaWind MktPro Bulk Campaign Launcher Schema (Meta Marketing API & Google Ads UAC)
 -- Safe idempotent migrations extending base schema.sql without breaking Realtime Report
 
 ALTER TABLE campaigns

@@ -1,5 +1,5 @@
 /* ==========================================================================
-   Apero MktPro Design System & Styling
+   PandaWind MktPro Design System & Styling
    Enterprise Marketing & Product Growth Intelligence Platform
    ========================================================================== */
 
@@ -876,14 +876,14 @@ body {
     max-height: 600px;
 }
 
-.apero-table {
+.pandawind-table {
     width: 100%;
     border-collapse: collapse;
     font-size: 12.5px;
     text-align: left;
 }
 
-.apero-table th {
+.pandawind-table th {
     background: var(--bg-surface-subtle);
     color: var(--text-tertiary);
     font-weight: 600;
@@ -899,15 +899,15 @@ body {
     user-select: none;
 }
 
-.apero-table th.sortable {
+.pandawind-table th.sortable {
     cursor: pointer;
 }
 
-.apero-table th.sortable:hover {
+.pandawind-table th.sortable:hover {
     color: var(--text-primary);
 }
 
-.apero-table td {
+.pandawind-table td {
     padding: 11px 14px;
     border-bottom: 1px solid var(--border-color);
     color: var(--text-primary);
@@ -915,11 +915,11 @@ body {
     transition: background 0.1s;
 }
 
-.apero-table tbody tr:hover td {
+.pandawind-table tbody tr:hover td {
     background: var(--bg-hover);
 }
 
-.apero-table tr.grand-total-row td {
+.pandawind-table tr.grand-total-row td {
     background: var(--bg-surface-subtle);
     font-weight: 700;
     border-top: 2px solid var(--border-color);

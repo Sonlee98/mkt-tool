@@ -1,9 +1,9 @@
 /**
- * Apero MktPro - Marketing & Product Growth Intelligence Platform
- * Comprehensive Data Store extracted from Apero MktPro files
+ * PandaWind MktPro - Marketing & Product Growth Intelligence Platform
+ * Comprehensive Data Store extracted from PandaWind MktPro files
  */
 
-const APERO_DATA = {
+const PANDAWIND_DATA = {
     // Current Active Configuration
     config: {
         currency: 'VND', // 'VND' | 'USD'
@@ -921,7 +921,7 @@ const APERO_DATA = {
             camTemplate: 'AGA-NEW-GLOBAL-CONTENT-SPANISH-SINGLE-TPC',
             adTemplate: 'auto_content_spanish_single',
             tactics: 'LienDT_AGA_DownScale_D0',
-            adAccount: 'TK33 - BM_Apero_Latam_02',
+            adAccount: 'TK33 - BM_PandaWind_Latam_02',
             createdDate: '2026-11-17',
             status: 'Running'
         },
@@ -933,7 +933,7 @@ const APERO_DATA = {
             camTemplate: 'CAM_FB_US_TIER1_ROAS_AUTO_SCALE',
             adTemplate: 'ADS_FB_VIDEO_9x16_AI_HUG_EMOTIONAL',
             tactics: 'Scale_High_ROAS_Aggressive',
-            adAccount: 'TK12 - BM_Apero_USA_Primary',
+            adAccount: 'TK12 - BM_PandaWind_USA_Primary',
             createdDate: '2026-11-16',
             status: 'Running'
         },
@@ -945,7 +945,7 @@ const APERO_DATA = {
             camTemplate: 'CAM_TIKTOK_GLOBAL_TRANSFORMATION_CBO',
             adTemplate: 'ADS_TIKTOK_9x16_FACE_DANCE_TREND',
             tactics: 'HoangNC_Upscale Copy',
-            adAccount: 'TK08 - TikTok_Apero_Agency_01',
+            adAccount: 'TK08 - TikTok_PandaWind_Agency_01',
             createdDate: '2026-11-15',
             status: 'Running'
         },
@@ -957,7 +957,7 @@ const APERO_DATA = {
             camTemplate: 'CAM_FB_LATAM_VIRAL_SCALE_D0',
             adTemplate: 'ADS_FB_CAROUSEL_PHOTO_RESTORE_SPLIT',
             tactics: 'PhuongNTK_Off TEST',
-            adAccount: 'TK24 - BM_Apero_APAC_03',
+            adAccount: 'TK24 - BM_PandaWind_APAC_03',
             createdDate: '2026-11-14',
             status: 'Running'
         }
@@ -1207,18 +1207,18 @@ const APERO_DATA = {
     // Administration & Ad Accounts
     administration: {
         adAccounts: [
-            { id: 'act_102938401', name: 'BM_Apero_USA_Primary', channel: 'Facebook', currency: 'USD', status: 'Connected', spendToday: '$6,400', balance: '$45,000', lastSync: '2 mins ago' },
-            { id: 'act_102938402', name: 'BM_Apero_Latam_02', channel: 'Facebook', currency: 'USD', status: 'Connected', spendToday: '$4,690', balance: '$28,000', lastSync: '3 mins ago' },
-            { id: 'act_719284109', name: 'TikTok_Apero_Agency_01', channel: 'TikTok', currency: 'USD', status: 'Connected', spendToday: '$321', balance: '$12,500', lastSync: 'Just now' },
+            { id: 'act_102938401', name: 'BM_PandaWind_USA_Primary', channel: 'Facebook', currency: 'USD', status: 'Connected', spendToday: '$6,400', balance: '$45,000', lastSync: '2 mins ago' },
+            { id: 'act_102938402', name: 'BM_PandaWind_Latam_02', channel: 'Facebook', currency: 'USD', status: 'Connected', spendToday: '$4,690', balance: '$28,000', lastSync: '3 mins ago' },
+            { id: 'act_719284109', name: 'TikTok_PandaWind_Agency_01', channel: 'TikTok', currency: 'USD', status: 'Connected', spendToday: '$321', balance: '$12,500', lastSync: 'Just now' },
             { id: 'act_829104820', name: 'GoogleAds_Nexus_UAC', channel: 'GoogleAds', currency: 'USD', status: 'Connected', spendToday: '$364', balance: '$30,000', lastSync: '5 mins ago' },
             { id: 'act_552910481', name: 'Mintegral_DSP_Direct', channel: 'Mintegral', currency: 'USD', status: 'Connected', spendToday: '$180', balance: '$8,000', lastSync: '10 mins ago' }
         ],
         teamMembers: [
-            { id: 'u1', name: 'Đồng Quỳnh Trang', email: 'trangdq@apero.vn', role: 'Creative Director', department: 'Creative Hub', status: 'Active' },
-            { id: 'u2', name: 'Nguyễn Công Hoàng', email: 'hoangnc@apero.vn', role: 'Lead Growth Marketer', department: 'Performance Marketing', status: 'Active' },
-            { id: 'u3', name: 'Nguyễn Thị Kim Phượng', email: 'phuongntk@apero.vn', role: 'Senior Media Buyer', department: 'Performance Marketing', status: 'Active' },
-            { id: 'u4', name: 'Trần Văn Minh', email: 'minhtv@apero.vn', role: 'Product Analytics Lead', department: 'Product Intelligence', status: 'Active' },
-            { id: 'u5', name: 'Đỗ Thị Liên', email: 'liendt@apero.vn', role: 'Automation Specialist', department: 'Ad Operations', status: 'Active' }
+            { id: 'u1', name: 'Đồng Quỳnh Trang', email: 'trangdq@pandawind.vn', role: 'Creative Director', department: 'Creative Hub', status: 'Active' },
+            { id: 'u2', name: 'Nguyễn Công Hoàng', email: 'hoangnc@pandawind.vn', role: 'Lead Growth Marketer', department: 'Performance Marketing', status: 'Active' },
+            { id: 'u3', name: 'Nguyễn Thị Kim Phượng', email: 'phuongntk@pandawind.vn', role: 'Senior Media Buyer', department: 'Performance Marketing', status: 'Active' },
+            { id: 'u4', name: 'Trần Văn Minh', email: 'minhtv@pandawind.vn', role: 'Product Analytics Lead', department: 'Product Intelligence', status: 'Active' },
+            { id: 'u5', name: 'Đỗ Thị Liên', email: 'liendt@pandawind.vn', role: 'Automation Specialist', department: 'Ad Operations', status: 'Active' }
         ],
         auditLogs: [
             { id: 1, time: '20:28:40', action: 'Tactic Execution', detail: 'Tactic "HoangNC_Upscale Copy" increased budget of AdSet #928174102 by 25% (ROAS D0 = 118.4%)', type: 'success' },
@@ -1239,4 +1239,4 @@ const APERO_DATA = {
 };
 
 // Export to window
-window.APERO_DATA = APERO_DATA;
+window.PANDAWIND_DATA = PANDAWIND_DATA;

@@ -4,8 +4,8 @@
 
 const BusinessModule = {
     render() {
-        const b = window.APERO_DATA.business;
-        const config = window.APERO_DATA.config;
+        const b = window.PANDAWIND_DATA.business;
+        const config = window.PANDAWIND_DATA.config;
 
         return `
             <div class="page-title-bar">
@@ -25,7 +25,7 @@ const BusinessModule = {
                     <span class="badge badge-success" style="font-size: 12px;">Biên Lợi Nhuận Ròng: 29.01%</span>
                 </div>
                 <div class="table-responsive">
-                    <table class="apero-table">
+                    <table class="pandawind-table">
                         <thead>
                             <tr>
                                 <th>Khoản Mục Tài Chính (Line Item)</th>

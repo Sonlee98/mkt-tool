@@ -10,8 +10,8 @@ const CohortModule = {
     },
 
     render() {
-        const data = window.APERO_DATA.cohort;
-        const config = window.APERO_DATA.config;
+        const data = window.PANDAWIND_DATA.cohort;
+        const config = window.PANDAWIND_DATA.config;
 
         const getHeatClass = (val) => {
             if (val >= 130) return 'heat-level-5';
@@ -83,7 +83,7 @@ const CohortModule = {
             <!-- Cohort Matrix Table -->
             <div class="data-table-container">
                 <div class="table-responsive">
-                    <table class="apero-table">
+                    <table class="pandawind-table">
                         <thead>
                             <tr>
                                 <th>First Open Time</th>

@@ -1,5 +1,5 @@
 /**
- * Apero MktPro - Backend API & Realtime SSE Client
+ * PandaWind MktPro - Backend API & Realtime SSE Client
  * Tự động kết nối Backend Node.js/Fastify + PostgreSQL và fallback an toàn khi mở offline
  */
 
@@ -12,7 +12,7 @@
 
     const DEFAULT_BASE = isBackendSameOrigin ? '' : 'http://localhost:4000';
 
-    const AperoApi = {
+    const PandaWindApi = {
         baseUrl: DEFAULT_BASE,
         isBackendOnline: false,
         listeners: {},
@@ -38,7 +38,7 @@
                 try {
                     fn(data);
                 } catch (err) {
-                    console.warn('[AperoApi] Listener error:', err);
+                    console.warn('[PandaWindApi] Listener error:', err);
                 }
             });
         },
@@ -50,7 +50,7 @@
 
             try {
                 const headers = Object.assign({}, options.headers || {});
-                const adminKey = typeof localStorage !== 'undefined' ? (localStorage.getItem('apero_admin_key') || '').trim() : '';
+                const adminKey = typeof localStorage !== 'undefined' ? (localStorage.getItem('pandawind_admin_key') || '').trim() : '';
                 if (adminKey && !headers['x-admin-key']) {
                     headers['x-admin-key'] = adminKey;
                 }
@@ -200,8 +200,8 @@
         setAdminKey(key) {
             if (typeof localStorage === 'undefined') return;
             const trimmed = String(key || '').trim();
-            if (trimmed) localStorage.setItem('apero_admin_key', trimmed);
-            else localStorage.removeItem('apero_admin_key');
+            if (trimmed) localStorage.setItem('pandawind_admin_key', trimmed);
+            else localStorage.removeItem('pandawind_admin_key');
         },
 
         // Templates Management
@@ -256,7 +256,7 @@
         async uploadCreativeBinary(file, meta = {}) {
             const qs = this.buildQuery(Object.assign({ fileName: file.name }, meta));
             const headers = { 'Content-Type': file.type || 'application/octet-stream' };
-            const adminKey = typeof localStorage !== 'undefined' ? (localStorage.getItem('apero_admin_key') || '').trim() : '';
+            const adminKey = typeof localStorage !== 'undefined' ? (localStorage.getItem('pandawind_admin_key') || '').trim() : '';
             if (adminKey) headers['x-admin-key'] = adminKey;
 
             const resp = await fetch(`${this.baseUrl}/api/v1/creatives/upload${qs}`, {
@@ -382,5 +382,5 @@
         }
     };
 
-    window.AperoApi = AperoApi;
+    window.PandaWindApi = PandaWindApi;
 })();

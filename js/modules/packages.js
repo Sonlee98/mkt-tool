@@ -33,7 +33,7 @@ const PackagesModule = {
     },
 
     getPackagesList() {
-        return this.state.cache || window.APERO_DATA.packages || [];
+        return this.state.cache || window.PANDAWIND_DATA.packages || [];
     },
 
     render() {
@@ -76,7 +76,7 @@ const PackagesModule = {
             <!-- Package Table -->
             <div class="data-table-container">
                 <div class="table-responsive">
-                    <table class="apero-table">
+                    <table class="pandawind-table">
                         <thead>
                             <tr>
                                 <th>Package Name</th>
@@ -162,14 +162,14 @@ const PackagesModule = {
     },
 
     async loadData(force = false) {
-        if (!window.AperoApi || (this.state.loading && !force)) return;
+        if (!window.PandaWindApi || (this.state.loading && !force)) return;
         this.state.loading = true;
         try {
             const [pkgRes, tmplRes, accRes, tacRes] = await Promise.all([
-                window.AperoApi.getPackages(),
-                window.AperoApi.getTemplates(),
-                window.AperoApi.getAdAccounts(),
-                window.AperoApi.getTactics()
+                window.PandaWindApi.getPackages(),
+                window.PandaWindApi.getTemplates(),
+                window.PandaWindApi.getAdAccounts(),
+                window.PandaWindApi.getTactics()
             ]);
 
             if (pkgRes && pkgRes.ok) {
@@ -391,8 +391,8 @@ const PackagesModule = {
     async savePackage() {
         const wd = this.state.wizardData;
         try {
-            if (window.AperoApi) {
-                await window.AperoApi.createPackage({
+            if (window.PandaWindApi) {
+                await window.PandaWindApi.createPackage({
                     name: wd.name,
                     channel: wd.channel,
                     appTemplateId: wd.appTemplateId,

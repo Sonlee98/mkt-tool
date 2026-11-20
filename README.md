@@ -1,4 +1,4 @@
-# Apero MktPro — UA Campaign Automation & Realtime Growth Intelligence
+# PandaWind MktPro — UA Campaign Automation & Realtime Growth Intelligence
 
 Nền tảng quản trị tăng trưởng người dùng (UA) hợp nhất hai phân hệ cốt lõi trên cùng một hạ tầng **Node.js + TypeScript + Fastify v5 + PostgreSQL 17 + Vanilla JS SSE**:
 1. **Mass Campaign Launcher (Tạo Camp Hàng Loạt)** cho ứng dụng di động trên **Facebook / Meta Ads (Marketing API v21.0)** và **Google Ads UAC (API v18)**.
@@ -35,7 +35,7 @@ Nền tảng quản trị tăng trưởng người dùng (UA) hợp nhất hai p
 ## Kiến Trúc & Tài Liệu Chi Tiết
 
 ```text
-apero-mktpro/
+mkt-tool/
 ├── index.html                        # SPA Shell (Dark/Light theme, Sidebar 14 routes)
 ├── MKTPRO_APP.html                   # File HTML bundle độc lập (có Offline Fallback)
 ├── docker-compose.yml                # PostgreSQL 17 Alpine (cổng 5434)
@@ -100,13 +100,13 @@ Khi khởi động, Server sẽ tự chạy migration tạo **17 bảng** và n�
 | Biến | Mặc định | Mô tả |
 | :--- | :--- | :--- |
 | `PORT` | `4000` | Cổng HTTP cho Backend API, SSE & Static Frontend |
-| `DATABASE_URL` | `postgres://apero:apero123@127.0.0.1:5434/apero_mktpro` | Chuỗi kết nối PostgreSQL |
+| `DATABASE_URL` | `postgres://pandawind:pandawind123@127.0.0.1:5434/pandawind_mktpro` | Chuỗi kết nối PostgreSQL |
 | `TIMEZONE` | `Asia/Ho_Chi_Minh` | Múi giờ chốt khung giờ `00:00–23:00` |
 | `EXCHANGE_RATE_VND` | `25718` | Tỷ giá quy đổi `USD` $\leftrightarrow$ `VND` |
 | `PLATFORM_FEE_RATE` | `0.0155` | Phí nền tảng dùng tính `PL2` / `%PL2` |
 | `MAX_CAMPAIGN_DAILY_BUDGET_USD` | `2000` | Trần ngân sách ngày tối đa mỗi chiến dịch |
 | `MAX_BATCH_DAILY_BUDGET_USD` | `10000` | Trần tổng ngân sách ngày tối đa mỗi Batch |
-| `TOKEN_ENCRYPTION_KEY` | `apero-mktpro-dev-vault-key-change-in-prod` | Khóa gốc sinh AES-256-GCM key mã hóa Token trong DB |
+| `TOKEN_ENCRYPTION_KEY` | `pandawind-mktpro-dev-vault-key-change-in-prod` | Khóa gốc sinh AES-256-GCM key mã hóa Token trong DB |
 | `WEBHOOK_SECRET` | *(trống)* | Token xác thực cho `/api/v1/webhooks/:source` |
 | `ADMIN_API_KEY` | *(trống)* | Khóa bảo vệ `x-admin-key` cho API cấu hình & bắn camp |
 | `PUBLIC_MEDIA_BASE_URL` | *(trống)* | Domain HTTPS công khai để Meta tải video qua `file_url` |
@@ -131,7 +131,7 @@ npm run verify:bulk
 npm run verify:prod
 ```
 
-Đóng gói lại file HTML độc lập `MKTPRO_APP.html` (chạy tại thư mục gốc `apero-mktpro/` trên Windows PowerShell):
+Đóng gói lại file HTML độc lập `MKTPRO_APP.html` (chạy tại thư mục gốc `mkt-tool/` trên Windows PowerShell):
 ```powershell
 powershell -ExecutionPolicy Bypass -File .\build_bundle.ps1
 powershell -ExecutionPolicy Bypass -File .\verify_bundle.ps1

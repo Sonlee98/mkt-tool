@@ -1,13 +1,13 @@
-# Tài Liệu Kiến Trúc Hệ Thống Web (Frontend & Backend) — Apero MktPro
+# Tài Liệu Kiến Trúc Hệ Thống Web (Frontend & Backend) — PandaWind MktPro
 
-**Phạm vi:** Toàn bộ kiến trúc Frontend (Vanilla JS SPA) & Backend (Node.js + TypeScript + Fastify + PostgreSQL) hiện có trong thư mục `apero-mktpro/`.  
+**Phạm vi:** Toàn bộ kiến trúc Frontend (Vanilla JS SPA) & Backend (Node.js + TypeScript + Fastify + PostgreSQL) hiện có trong thư mục `mkt-tool/`.  
 **Cập nhật:** 20/11/2026
 
 ---
 
 ## 1. Tổng Quan Hệ Thống & Công Nghệ (Tech Stack)
 
-Apero MktPro được thiết kế theo mô hình **Unified Modular Monolith** tối giản dependency nhằm đạt độ trễ thấp cho Realtime Report & luồng tạo chiến dịch hàng loạt, đồng thời hỗ trợ **Offline Fallback** khi mở file HTML độc lập.
+PandaWind MktPro được thiết kế theo mô hình **Unified Modular Monolith** tối giản dependency nhằm đạt độ trễ thấp cho Realtime Report & luồng tạo chiến dịch hàng loạt, đồng thời hỗ trợ **Offline Fallback** khi mở file HTML độc lập.
 
 | Tầng | Công nghệ / Thành phần | Ghi chú kỹ thuật |
 | :--- | :--- | :--- |
@@ -15,7 +15,7 @@ Apero MktPro được thiết kế theo mô hình **Unified Modular Monolith** t
 | **Offline Bundle** | **PowerShell Bundler (`build_bundle.ps1`)** | Gộp `index.html` + `css/style.css` + 19 file JS thành duy nhất 1 file `MKTPRO_APP.html` |
 | **Backend (BE)** | **Node.js + TypeScript + Fastify v5** | Chỉ 5 runtime dependencies (`fastify`, `@fastify/cors`, `@fastify/static`, `pg`, `dotenv`); chạy trực tiếp bằng `tsx` tại cổng `4000` |
 | **Realtime Transport** | **Server-Sent Events (`EventSource`)** | Endpoint `/api/v1/realtime/stream` đẩy sự kiện realtime một chiều từ Server xuống Browser qua `SseHub` |
-| **Database** | **PostgreSQL 17 (`postgres:17-alpine`)** | Chạy trong Docker container `apero-mktpro-db` cổng `5434`, truy vấn SQL thuần qua `pg.Pool` (`max: 15`) |
+| **Database** | **PostgreSQL 17 (`postgres:17-alpine`)** | Chạy trong Docker container `pandawind-mktpro-db` cổng `5434`, truy vấn SQL thuần qua `pg.Pool` (`max: 15`) |
 | **Media Storage** | **Local Disk + Public URL Proxy** | Lưu file binary upload (tối đa `250MB`) tại `backend/uploads/creatives/`, phục vụ qua `/uploads/` |
 
 ### Sơ Đồ Kiến Trúc Tổng Thể
@@ -26,8 +26,8 @@ flowchart TB
         UI["index.html / MKTPRO_APP.html"]
         Router["App Controller (js/app.js - 14 Routes)"]
         Modules["15 Feature Modules (js/modules/*.js)"]
-        ApiClient["AperoApi Client + EventSource SSE (js/api.js)"]
-        StaticData["Offline Fallback Data (window.APERO_DATA)"]
+        ApiClient["PandaWindApi Client + EventSource SSE (js/api.js)"]
+        StaticData["Offline Fallback Data (window.PANDAWIND_DATA)"]
         UI --> Router --> Modules --> ApiClient
         Modules -.->|"Offline fallback"| StaticData
     end
@@ -69,22 +69,22 @@ flowchart TB
 
 ---
 
-## 2. Cấu Trúc Thư Mục Toàn Dự Án (`apero-mktpro/`)
+## 2. Cấu Trúc Thư Mục Toàn Dự Án (`mkt-tool/`)
 
 ```text
-apero-mktpro/
+mkt-tool/
 ├── index.html                          # Shell HTML chính (Dark/Light theme, Sidebar 4 nhóm, Header)
 ├── MKTPRO_APP.html                     # Bản bundle 1-file độc lập được sinh từ build_bundle.ps1
 ├── build_bundle.ps1                    # Script gộp index.html + CSS + 19 file JS thành MKTPRO_APP.html
 ├── verify_bundle.ps1                   # Script kiểm tra tính toàn vẹn của file MKTPRO_APP.html
-├── docker-compose.yml                  # Dựng PostgreSQL 17 container (apero-mktpro-db, cổng 5434)
+├── docker-compose.yml                  # Dựng PostgreSQL 17 container (pandawind-mktpro-db, cổng 5434)
 ├── TAI_LIEU_CHUAN_BI_PRODUCTION.md     # Tài liệu chuẩn bị hạ tầng, thông số, Token & API Key Production
 ├── TAI_LIEU_KIEN_TRUC_HE_THONG.md      # Tài liệu kiến trúc FE/BE (file hiện tại)
 ├── css/
 │   └── style.css                       # Toàn bộ Design System, Dark/Light tokens, bảng, modal, pill realtime
 ├── js/
-│   ├── data.js                         # Dữ liệu mẫu & Fallback Data (window.APERO_DATA) + biến cấu hình
-│   ├── api.js                          # HTTP Fetch Client + Native SSE EventSource (window.AperoApi)
+│   ├── data.js                         # Dữ liệu mẫu & Fallback Data (window.PANDAWIND_DATA) + biến cấu hình
+│   ├── api.js                          # HTTP Fetch Client + Native SSE EventSource (window.PandaWindApi)
 │   ├── charts.js                       # Thư viện vẽ biểu đồ SVG/Canvas thuần không phụ thuộc ngoài
 │   ├── app.js                          # Controller trung tâm: Router 14 trang, Currency, Search Ctrl+K, Toast
 │   └── modules/                        # 15 module nghiệp vụ chia làm 2 nhóm (nối DB thật & phân tích tĩnh)
@@ -149,12 +149,12 @@ apero-mktpro/
 ## 3. Kiến Trúc Frontend (FE — Vanilla JS Modular SPA)
 
 ### 3.1. Cơ chế Nạp & Khởi tạo (`index.html` & `js/app.js`)
-Frontend hoạt động hoàn toàn không cần bước biên dịch npm (`zero-build`). Thứ tự `<script>` trong [index.html](file:///E:/Code/website%20mkt/apero-mktpro/index.html#L273-L295) và [build_bundle.ps1](file:///E:/Code/website%20mkt/apero-mktpro/build_bundle.ps1#L40-L60) được khóa cứng theo dependency graph:
-1. `js/data.js`: Tạo dữ liệu mẫu offline `window.APERO_DATA` (sản phẩm, bộ lọc, thông báo, fallback tables).
-2. `js/api.js`: Khởi tạo `window.AperoApi` (REST + SSE client).
+Frontend hoạt động hoàn toàn không cần bước biên dịch npm (`zero-build`). Thứ tự `<script>` trong [index.html](./index.html) và [build_bundle.ps1](./build_bundle.ps1) được khóa cứng theo dependency graph:
+1. `js/data.js`: Tạo dữ liệu mẫu offline `window.PANDAWIND_DATA` (sản phẩm, bộ lọc, thông báo, fallback tables).
+2. `js/api.js`: Khởi tạo `window.PandaWindApi` (REST + SSE client).
 3. `js/charts.js`: Cung cấp hàm vẽ biểu đồ line/bar/area cho các trang báo cáo.
 4. `js/modules/*.js` (15 module): Mỗi file đăng ký lên `window.<ModuleName>` với giao diện thống nhất `{ render(), initCharts?(), ... }`.
-5. `js/app.js`: Khởi tạo `App.init()` — khôi phục Theme (`localStorage.apero_theme`), gắn phím tắt toàn cục (`Ctrl+K` Search, `Esc`), khởi chạy `RealtimeEngine.init()` để nối SSE, và render route mặc định `intraday`.
+5. `js/app.js`: Khởi tạo `App.init()` — khôi phục Theme (`localStorage.pandawind_theme`), gắn phím tắt toàn cục (`Ctrl+K` Search, `Esc`), khởi chạy `RealtimeEngine.init()` để nối SSE, và render route mặc định `intraday`.
 
 ### 3.2. Định tuyến SPA (14 Routes) & Quản lý Trạng thái Toàn cục (`App`)
 - **Router (`App.setRoute` / `App.renderRoute`)**: Điều hướng không tải lại trang bằng cách thay `innerHTML` của `#mainContentArea`, đồng bộ active state trên Sidebar, cập nhật Breadcrumb và gọi hàm `initCharts()` sau `60ms`.
@@ -171,8 +171,8 @@ Frontend hoạt động hoàn toàn không cần bước biên dịch npm (`zero
 - **Tự nhận diện môi trường (`DEFAULT_BASE`)**:
   - Nếu đang mở trên `http://...:4000` (do Fastify phục vụ trực tiếp), `baseUrl = ''` (same-origin, không dính CORS).
   - Nếu mở qua Live Server khác port hoặc mở trực tiếp file `MKTPRO_APP.html` (`file://`), tự động trỏ tới `http://localhost:4000`.
-- **Offline Fallback**: Mọi phương thức `request()` đặt timeout `15s` và cập nhật cờ `isBackendOnline`. Nếu Backend chưa bật, các màn hình sẽ bắt lỗi an toàn và rơi về dữ liệu tĩnh trong `window.APERO_DATA` thay vì treo giao diện.
-- **Event Bus nội bộ trên SSE (`connectRealtimeStream`)**: Lắng nghe `/api/v1/realtime/stream` và phân phối 5 sự kiện tới mọi module đã đăng ký qua `AperoApi.on(...)`:
+- **Offline Fallback**: Mọi phương thức `request()` đặt timeout `15s` và cập nhật cờ `isBackendOnline`. Nếu Backend chưa bật, các màn hình sẽ bắt lỗi an toàn và rơi về dữ liệu tĩnh trong `window.PANDAWIND_DATA` thay vì treo giao diện.
+- **Event Bus nội bộ trên SSE (`connectRealtimeStream`)**: Lắng nghe `/api/v1/realtime/stream` và phân phối 5 sự kiện tới mọi module đã đăng ký qua `PandaWindApi.on(...)`:
   - `connected`: Kết nối SSE thành công kèm trạng thái `SyncWorker`.
   - `intraday_sync`: Có bản ghi metrics mới $\rightarrow$ `RealtimeEngine` & `IntradayModule` tự động làm mới KPI, biểu đồ 24h và bảng cây.
   - `worker_status`: Trạng thái bật/tắt `SyncWorker` thay đổi.
@@ -186,7 +186,7 @@ Frontend hoạt động hoàn toàn không cần bước biên dịch npm (`zero
 | **Full-Stack DB + SSE** | `intraday.js`, `realtimeEngine.js` | Nối `/api/v1/intraday/report`, xuất CSV thật, bật/tắt camp (`PATCH`), auto-refresh KPI/Chart khi SSE `intraday_sync` tới, mở Telemetry Modal xem log thật & bật/tắt SyncWorker |
 | **Full-Stack Bulk Launch** | `creatives.js`, `packages.js`, `templates.js`, `tactics.js` | Upload file MP4 binary thật, re-check AI policy, CRUD Templates/Tactics/Packages, mở Bulk Launch Wizard chọn ma trận `(Creatives × Packages)`, xem Dry-run Preview, Launch & theo dõi tiến độ từng job realtime qua SSE + Retry Job lỗi |
 | **Full-Stack Ingestion & Ops** | `dataManagement.js`, `admin.js` | Form tạo camp thủ công, Upload CSV, Paste JSON, Sync link Google Sheets, test bắn Webhook mẫu; quản lý Ad Accounts, lưu Access Token & bấm Sync thủ công |
-| **Analytics UI (Static Data)** | `cutoff.js`, `cohort.js`, `channel.js`, `productMetrics.js`, `compareVersion.js`, `monetization.js`, `business.js` | Render đầy đủ giao diện báo cáo nâng cao (Heatmap Cohort D0–D30, Cutoff, P&L, Version Compare, Mediation) từ `window.APERO_DATA` & `charts.js` |
+| **Analytics UI (Static Data)** | `cutoff.js`, `cohort.js`, `channel.js`, `productMetrics.js`, `compareVersion.js`, `monetization.js`, `business.js` | Render đầy đủ giao diện báo cáo nâng cao (Heatmap Cohort D0–D30, Cutoff, P&L, Version Compare, Mediation) từ `window.PANDAWIND_DATA` & `charts.js` |
 
 ---
 
@@ -290,9 +290,9 @@ sequenceDiagram
 
 | Tác vụ | Thư mục chạy | Lệnh thực thi | Mục đích & Kết quả |
 | :--- | :--- | :--- | :--- |
-| **1. Dựng Database** | `apero-mktpro/` | `docker compose up -d` | Khởi chạy PostgreSQL 17 (`apero-mktpro-db`, cổng `5434`) |
-| **2. Chạy Backend Dev** | `apero-mktpro/backend/` | `npm run dev` *(hoặc `npm run start`)* | Chạy server tại `http://localhost:4000`, tự migrate + seed DB |
-| **3. Kiểm tra TypeScript** | `apero-mktpro/backend/` | `npm run build` | Kiểm tra biên dịch `tsc` toàn bộ mã nguồn Backend |
-| **4. Test E2E Realtime** | `apero-mktpro/backend/` | `npm run verify` | Chạy `src/verify.ts` (10 bước: Health, Intraday KPI/Filters, Webhook Ingest, Create Campaign + Search, Import CSV, Export CSV, Ad Account Sync, SSE + Worker Trigger, Frontend Static Hosting) |
-| **5. Test E2E Bulk Launch** | `apero-mktpro/backend/` | `npm run verify:bulk` | Chạy `src/verifyBulk.ts` (9 checks trong 8 khối: Seeded APIs, Cross-Validation Package/UAC, Binary MP4 Upload + SHA-256 + Static Serving, Matrix Preview Math, Idempotent Bulk Launch + SSE Saga, Media Cache Hit, Simulated Fail & Checkpoint Retry, Intraday Integration) |
-| **6. Build Offline HTML** | `apero-mktpro/` | `powershell -ExecutionPolicy Bypass -File .\build_bundle.ps1` | Đóng gói `MKTPRO_APP.html` và kiểm tra lại bằng `verify_bundle.ps1` |
+| **1. Dựng Database** | `mkt-tool/` | `docker compose up -d` | Khởi chạy PostgreSQL 17 (`pandawind-mktpro-db`, cổng `5434`) |
+| **2. Chạy Backend Dev** | `mkt-tool/backend/` | `npm run dev` *(hoặc `npm run start`)* | Chạy server tại `http://localhost:4000`, tự migrate + seed DB |
+| **3. Kiểm tra TypeScript** | `mkt-tool/backend/` | `npm run build` | Kiểm tra biên dịch `tsc` toàn bộ mã nguồn Backend |
+| **4. Test E2E Realtime** | `mkt-tool/backend/` | `npm run verify` | Chạy `src/verify.ts` (10 bước: Health, Intraday KPI/Filters, Webhook Ingest, Create Campaign + Search, Import CSV, Export CSV, Ad Account Sync, SSE + Worker Trigger, Frontend Static Hosting) |
+| **5. Test E2E Bulk Launch** | `mkt-tool/backend/` | `npm run verify:bulk` | Chạy `src/verifyBulk.ts` (9 checks trong 8 khối: Seeded APIs, Cross-Validation Package/UAC, Binary MP4 Upload + SHA-256 + Static Serving, Matrix Preview Math, Idempotent Bulk Launch + SSE Saga, Media Cache Hit, Simulated Fail & Checkpoint Retry, Intraday Integration) |
+| **6. Build Offline HTML** | `mkt-tool/` | `powershell -ExecutionPolicy Bypass -File .\build_bundle.ps1` | Đóng gói `MKTPRO_APP.html` và kiểm tra lại bằng `verify_bundle.ps1` |

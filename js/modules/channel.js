@@ -25,9 +25,9 @@ const ChannelModule = {
     },
 
     render() {
-        const data = window.APERO_DATA.channels;
+        const data = window.PANDAWIND_DATA.channels;
         const s = data.summary;
-        const config = window.APERO_DATA.config;
+        const config = window.PANDAWIND_DATA.config;
 
         return `
             <div class="page-title-bar">
@@ -98,7 +98,7 @@ const ChannelModule = {
             <!-- Detailed Channel Table -->
             <div class="data-table-container">
                 <div class="table-responsive">
-                    <table class="apero-table">
+                    <table class="pandawind-table">
                         <thead>
                             <tr>
                                 <th>No.</th>
@@ -215,12 +215,12 @@ const ChannelModule = {
     },
 
     initCharts() {
-        const items = window.APERO_DATA.channels.items.slice(0, 3);
+        const items = window.PANDAWIND_DATA.channels.items.slice(0, 3);
         const labels = items.map(i => i.name);
         const costData = items.map(i => i.costUsd / 1000);
         const revData = items.map(i => i.cohortRevUsd / 1000);
 
-        window.AperoCharts.renderBarChart('channelBarCanvas', {
+        window.PandaWindCharts.renderBarChart('channelBarCanvas', {
             labels: labels,
             datasets: [
                 {
@@ -238,7 +238,7 @@ const ChannelModule = {
         });
 
         // Ad format donut
-        window.AperoCharts.renderDonutChart('channelFormatDonutCanvas', {
+        window.PandaWindCharts.renderDonutChart('channelFormatDonutCanvas', {
             labels: ['Interstitial', 'Native', 'Rewarded', 'Banner'],
             data: [320, 202, 119, 63],
             colors: ['#3b82f6', '#10b981', '#f59e0b', '#8b5cf6'],

@@ -1,21 +1,21 @@
 services:
   postgres:
     image: postgres:17-alpine
-    container_name: apero-mktpro-db
+    container_name: pandawind-mktpro-db
     restart: unless-stopped
     environment:
-      POSTGRES_USER: apero
-      POSTGRES_PASSWORD: apero123
-      POSTGRES_DB: apero_mktpro
+      POSTGRES_USER: pandawind
+      POSTGRES_PASSWORD: pandawind123
+      POSTGRES_DB: pandawind_mktpro
     ports:
       - "5434:5432"
     volumes:
-      - apero_mktpro_pgdata:/var/lib/postgresql/data
+      - pandawind_mktpro_pgdata:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U apero -d apero_mktpro"]
+      test: ["CMD-SHELL", "pg_isready -U pandawind -d pandawind_mktpro"]
       interval: 5s
       timeout: 5s
       retries: 10
 
 volumes:
-  apero_mktpro_pgdata:
+  pandawind_mktpro_pgdata:

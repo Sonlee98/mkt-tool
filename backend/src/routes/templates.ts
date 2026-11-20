@@ -192,7 +192,7 @@ export async function templateRoutes(app: FastifyInstance): Promise<void> {
                 const channel = normalizeGeneralChannel(String(b.channel || 'Facebook'));
                 const productId = String(b.productId || 'AIP922').trim().toUpperCase();
                 const platformAppId = String(b.platformAppId || b.appId || '').trim();
-                const bundleId = String(b.bundleId || platformAppId || 'com.apero.app').trim();
+                const bundleId = String(b.bundleId || platformAppId || 'com.pandawind.app').trim();
                 const storeType = String(b.storeType || 'GOOGLE_PLAY').trim();
                 const storeUrl = String(
                     b.storeUrl || `https://play.google.com/store/apps/details?id=${encodeURIComponent(bundleId)}`

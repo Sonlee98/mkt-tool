@@ -392,20 +392,20 @@ export async function seedIfEmpty(pool: Pool): Promise<void> {
         // Seed Marketers
         await client.query(`
             INSERT INTO marketers (id, full_name, email, role, department) VALUES
-                ('HoangNC', 'Nguyễn Công Hoàng', 'hoangnc@apero.vn', 'Lead Growth Marketer', 'Performance Marketing'),
-                ('TrangDQ', 'Đồng Quỳnh Trang', 'trangdq@apero.vn', 'Creative & Growth Lead', 'Creative Hub'),
-                ('PhuongNTK', 'Nguyễn Thị Kim Phượng', 'phuongntk@apero.vn', 'Senior Media Buyer', 'Performance Marketing'),
-                ('MinhTV', 'Trần Văn Minh', 'minhtv@apero.vn', 'Product Analytics Lead', 'Product Intelligence'),
-                ('LienDT', 'Đỗ Thị Liên', 'liendt@apero.vn', 'Automation Specialist', 'Ad Operations')
+                ('HoangNC', 'Nguyễn Công Hoàng', 'hoangnc@pandawind.vn', 'Lead Growth Marketer', 'Performance Marketing'),
+                ('TrangDQ', 'Đồng Quỳnh Trang', 'trangdq@pandawind.vn', 'Creative & Growth Lead', 'Creative Hub'),
+                ('PhuongNTK', 'Nguyễn Thị Kim Phượng', 'phuongntk@pandawind.vn', 'Senior Media Buyer', 'Performance Marketing'),
+                ('MinhTV', 'Trần Văn Minh', 'minhtv@pandawind.vn', 'Product Analytics Lead', 'Product Intelligence'),
+                ('LienDT', 'Đỗ Thị Liên', 'liendt@pandawind.vn', 'Automation Specialist', 'Ad Operations')
             ON CONFLICT (id) DO NOTHING
         `);
 
         // Seed Ad Accounts (no live token yet -> ready for adapter token injection)
         await client.query(`
             INSERT INTO ad_accounts (id, name, channel, currency, balance_usd, status, access_token, api_config, last_sync_at) VALUES
-                ('act_102938401', 'BM_Apero_USA_Primary', 'Facebook', 'USD', 45000.00, 'Connected', NULL, '{"apiVersion":"v20.0","endpoint":"https://graph.facebook.com/v20.0"}'::jsonb, NOW() - INTERVAL '2 minutes'),
-                ('act_102938402', 'BM_Apero_Latam_02', 'Facebook', 'USD', 28000.00, 'Connected', NULL, '{"apiVersion":"v20.0","endpoint":"https://graph.facebook.com/v20.0"}'::jsonb, NOW() - INTERVAL '3 minutes'),
-                ('act_719284109', 'TikTok_Apero_Agency_01', 'TikTok', 'USD', 12500.00, 'Connected', NULL, '{"apiVersion":"v1.3","endpoint":"https://business-api.tiktok.com/open_api/v1.3"}'::jsonb, NOW() - INTERVAL '1 minute'),
+                ('act_102938401', 'BM_PandaWind_USA_Primary', 'Facebook', 'USD', 45000.00, 'Connected', NULL, '{"apiVersion":"v20.0","endpoint":"https://graph.facebook.com/v20.0"}'::jsonb, NOW() - INTERVAL '2 minutes'),
+                ('act_102938402', 'BM_PandaWind_Latam_02', 'Facebook', 'USD', 28000.00, 'Connected', NULL, '{"apiVersion":"v20.0","endpoint":"https://graph.facebook.com/v20.0"}'::jsonb, NOW() - INTERVAL '3 minutes'),
+                ('act_719284109', 'TikTok_PandaWind_Agency_01', 'TikTok', 'USD', 12500.00, 'Connected', NULL, '{"apiVersion":"v1.3","endpoint":"https://business-api.tiktok.com/open_api/v1.3"}'::jsonb, NOW() - INTERVAL '1 minute'),
                 ('act_829104820', 'GoogleAds_Nexus_UAC', 'Google Ads', 'USD', 30000.00, 'Connected', NULL, '{"apiVersion":"v17","endpoint":"https://googleads.googleapis.com/v17"}'::jsonb, NOW() - INTERVAL '5 minutes'),
                 ('act_552910481', 'Mintegral_DSP_Direct', 'Mintegral', 'USD', 8000.00, 'Connected', NULL, '{"apiVersion":"v2","endpoint":"https://ss-api.mintegral.com/api/v2"}'::jsonb, NOW() - INTERVAL '10 minutes')
             ON CONFLICT (id) DO NOTHING

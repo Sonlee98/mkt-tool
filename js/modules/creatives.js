@@ -30,14 +30,14 @@ const CreativesModule = {
         if (this.state.cache && this.state.summaryCache) {
             return { summary: this.state.summaryCache, items: this.state.cache };
         }
-        return window.APERO_DATA.creatives;
+        return window.PANDAWIND_DATA.creatives;
     },
 
     bindSseEvents() {
-        if (this.state.sseBound || !window.AperoApi) return;
+        if (this.state.sseBound || !window.PandaWindApi) return;
         this.state.sseBound = true;
 
-        window.AperoApi.on('bulk_job_updated', (job) => {
+        window.PandaWindApi.on('bulk_job_updated', (job) => {
             if (!this.state.activeBatch || job.batchId !== this.state.activeBatch.id) return;
             const idx = this.state.activeBatchJobs.findIndex(j => j.id === job.id);
             if (idx >= 0) {
@@ -52,7 +52,7 @@ const CreativesModule = {
             this.refreshLaunchModalBody();
         });
 
-        window.AperoApi.on('bulk_batch_completed', (batchInfo) => {
+        window.PandaWindApi.on('bulk_batch_completed', (batchInfo) => {
             if (this.state.activeBatch && batchInfo.batchId === this.state.activeBatch.id) {
                 this.state.activeBatch.status = batchInfo.status;
                 this.state.activeBatch.succeededJobs = batchInfo.succeededJobs;
@@ -282,12 +282,12 @@ const CreativesModule = {
     },
 
     async loadData(force = false) {
-        if (!window.AperoApi || (this.state.loading && !force)) return;
+        if (!window.PandaWindApi || (this.state.loading && !force)) return;
         this.state.loading = true;
         try {
             const [crRes, pkgRes] = await Promise.all([
-                window.AperoApi.getCreatives(),
-                window.AperoApi.getPackages()
+                window.PandaWindApi.getCreatives(),
+                window.PandaWindApi.getPackages()
             ]);
             if (crRes && crRes.ok) {
                 this.state.cache = crRes.items || [];
@@ -348,8 +348,8 @@ const CreativesModule = {
     async batchRecheck() {
         App.showToast('🛡️ Đang chạy kiểm duyệt chính sách AI cho Creatives...', 'info');
         try {
-            if (window.AperoApi) {
-                const res = await window.AperoApi.recheckCreativePolicy(this.state.selectedIds);
+            if (window.PandaWindApi) {
+                const res = await window.PandaWindApi.recheckCreativePolicy(this.state.selectedIds);
                 App.showToast(`Kiểm duyệt hoàn tất: ${res.passedCount} đạt chuẩn, ${res.flaggedCount} cần rà soát.`, 'success');
                 await this.loadData(true);
             }
@@ -384,7 +384,7 @@ const CreativesModule = {
     },
 
     renderVideoPlayerInner(cr) {
-        const fullUrl = cr.publicUrl ? `${window.AperoApi?.baseUrl || ''}${cr.publicUrl}` : null;
+        const fullUrl = cr.publicUrl ? `${window.PandaWindApi?.baseUrl || ''}${cr.publicUrl}` : null;
         return `
             <div class="modal-box" style="max-width: 520px;">
                 <div class="modal-header">
@@ -456,10 +456,10 @@ const CreativesModule = {
         };
 
         try {
-            if (!window.AperoApi) throw new Error('Backend chưa bật');
+            if (!window.PandaWindApi) throw new Error('Backend chưa bật');
             if (files.length > 0) {
                 for (const file of files) {
-                    await window.AperoApi.uploadCreativeBinary(file, meta);
+                    await window.PandaWindApi.uploadCreativeBinary(file, meta);
                 }
                 App.showToast(`Đã tải lên ${files.length} creative lên Server & lưu PostgreSQL!`, 'success');
             } else {
@@ -468,7 +468,7 @@ const CreativesModule = {
                     App.showToast('Vui lòng chọn file MP4/ảnh hoặc nhập tên Creative!', 'warning');
                     return;
                 }
-                await window.AperoApi.uploadCreativeMeta(Object.assign({ fileName: customName, title: customName }, meta));
+                await window.PandaWindApi.uploadCreativeMeta(Object.assign({ fileName: customName, title: customName }, meta));
                 App.showToast(`Đã đăng ký creative "${customName}" vào Creative Hub!`, 'success');
             }
             this.closeUploadModal();
@@ -583,8 +583,8 @@ const CreativesModule = {
         const modal = document.getElementById('bulkLaunchModalBackdrop');
         if (modal) modal.classList.add('open');
         try {
-            if (window.AperoApi) {
-                const res = await window.AperoApi.getBulkBatches();
+            if (window.PandaWindApi) {
+                const res = await window.PandaWindApi.getBulkBatches();
                 this.state.batchesCache = res.batches || [];
             }
         } catch {}
@@ -606,13 +606,13 @@ const CreativesModule = {
     },
 
     async fetchPreview() {
-        if (!window.AperoApi || this.state.selectedPackageIds.length === 0 || this.state.selectedIds.length === 0) {
+        if (!window.PandaWindApi || this.state.selectedPackageIds.length === 0 || this.state.selectedIds.length === 0) {
             this.state.previewResult = null;
             this.refreshLaunchModalBody();
             return;
         }
         try {
-            const res = await window.AperoApi.previewBulkLaunch(this.state.selectedIds, this.state.selectedPackageIds);
+            const res = await window.PandaWindApi.previewBulkLaunch(this.state.selectedIds, this.state.selectedPackageIds);
             this.state.previewResult = res;
         } catch (err) {
             this.state.previewResult = { error: err.message };
@@ -643,7 +643,7 @@ const CreativesModule = {
         const idemKey = `ui_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
 
         try {
-            const res = await window.AperoApi.launchBulkCampaigns({
+            const res = await window.PandaWindApi.launchBulkCampaigns({
                 creativeIds: this.state.selectedIds,
                 packageIds: this.state.selectedPackageIds,
                 createdBy: 'HoangNC',
@@ -674,7 +674,7 @@ const CreativesModule = {
 
     async inspectBatch(batchId) {
         try {
-            const res = await window.AperoApi.getBulkBatch(batchId);
+            const res = await window.PandaWindApi.getBulkBatch(batchId);
             this.state.activeBatch = res.batch;
             this.state.activeBatchJobs = res.jobs || [];
             this.state.launchModalTab = 'monitor';
@@ -686,7 +686,7 @@ const CreativesModule = {
 
     async retryJob(jobId) {
         try {
-            await window.AperoApi.retryLaunchJob(jobId);
+            await window.PandaWindApi.retryLaunchJob(jobId);
             App.showToast('↻ Đã đưa Job lỗi quay lại hàng đợi (Resume từ Checkpoint)!', 'info');
         } catch (err) {
             App.showToast(`Lỗi Retry: ${err.message}`, 'danger');
@@ -696,7 +696,7 @@ const CreativesModule = {
     async retryAllFailed() {
         if (!this.state.activeBatch) return;
         try {
-            const res = await window.AperoApi.retryBatchFailed(this.state.activeBatch.id);
+            const res = await window.PandaWindApi.retryBatchFailed(this.state.activeBatch.id);
             App.showToast(`↻ Đang chạy lại ${res.retriedCount} jobs lỗi...`, 'info');
         } catch (err) {
             App.showToast(`Lỗi Retry Batch: ${err.message}`, 'danger');
@@ -738,7 +738,7 @@ const CreativesModule = {
         if (this.state.launchModalTab === 'history') {
             return `
                 <div style="font-weight:700; margin-bottom:10px;">Lịch sử Các Đợt Tạo Camp Hàng Loạt (20 Batch Gần Nhất)</div>
-                <table class="apero-table">
+                <table class="pandawind-table">
                     <thead>
                         <tr>
                             <th>Batch ID</th>
@@ -798,7 +798,7 @@ const CreativesModule = {
                 ` : ''}
 
                 <div style="border:1px solid var(--border-color); border-radius:var(--radius-md); overflow:hidden;">
-                    <table class="apero-table">
+                    <table class="pandawind-table">
                         <thead>
                             <tr>
                                 <th>Tên Chiến Dịch</th>

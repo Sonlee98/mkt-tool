@@ -168,7 +168,7 @@ export async function resolveJobMedia(
     let cacheHits = 0;
     let uploadsPerformed = 0;
 
-    const ytPoolScope = (acc.api_config?.youtube_channel_id as string) || 'yt_apero_uac_pool_01';
+    const ytPoolScope = (acc.api_config?.youtube_channel_id as string) || 'yt_pandawind_uac_pool_01';
 
     for (const cr of creatives) {
         if (channel === 'Facebook') {

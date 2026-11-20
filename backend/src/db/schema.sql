@@ -1,4 +1,4 @@
--- Apero MktPro Realtime Intraday Schema (PostgreSQL)
+-- PandaWind MktPro Realtime Intraday Schema (PostgreSQL)
 -- Safe idempotent migrations (never drops or truncates existing data)
 
 CREATE TABLE IF NOT EXISTS products (

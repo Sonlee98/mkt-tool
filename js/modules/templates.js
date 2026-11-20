@@ -16,7 +16,7 @@ const TemplatesModule = {
     },
 
     getDataset() {
-        return this.state.cache || window.APERO_DATA.templates;
+        return this.state.cache || window.PANDAWIND_DATA.templates;
     },
 
     render() {
@@ -94,10 +94,10 @@ const TemplatesModule = {
     },
 
     async loadData(force = false) {
-        if (!window.AperoApi || (this.state.loading && !force)) return;
+        if (!window.PandaWindApi || (this.state.loading && !force)) return;
         this.state.loading = true;
         try {
-            const res = await window.AperoApi.getTemplates();
+            const res = await window.PandaWindApi.getTemplates();
             if (res && res.ok) {
                 this.state.cache = {
                     applications: res.applications || [],
@@ -166,7 +166,7 @@ const TemplatesModule = {
                 a => a.productId
             );
             return `
-                <table class="apero-table">
+                <table class="pandawind-table">
                     <thead>
                         <tr>
                             <th>Application Name</th>
@@ -205,7 +205,7 @@ const TemplatesModule = {
                 null
             );
             return `
-                <table class="apero-table">
+                <table class="pandawind-table">
                     <thead>
                         <tr>
                             <th>Cam Template's Name</th>
@@ -248,7 +248,7 @@ const TemplatesModule = {
                 null
             );
             return `
-                <table class="apero-table">
+                <table class="pandawind-table">
                     <thead>
                         <tr>
                             <th>Ads Template's Name</th>
@@ -289,7 +289,7 @@ const TemplatesModule = {
                 null
             );
             return `
-                <table class="apero-table">
+                <table class="pandawind-table">
                     <thead>
                         <tr>
                             <th>Page Name</th>
@@ -388,8 +388,8 @@ const TemplatesModule = {
         if (!src) return;
 
         try {
-            if (window.AperoApi) {
-                await window.AperoApi.createTemplate(type, payload);
+            if (window.PandaWindApi) {
+                await window.PandaWindApi.createTemplate(type, payload);
                 App.showToast(`Đã nhân bản ${src.name} vào PostgreSQL!`, 'success');
                 await this.loadData(true);
             }
@@ -470,8 +470,8 @@ const TemplatesModule = {
         }
 
         try {
-            if (window.AperoApi) {
-                await window.AperoApi.createTemplate(tab, payload);
+            if (window.PandaWindApi) {
+                await window.PandaWindApi.createTemplate(tab, payload);
                 App.showToast(`Đã lưu ${this.getTabLabel()} vào PostgreSQL thành công!`, 'success');
                 this.closeModal();
                 await this.loadData(true);

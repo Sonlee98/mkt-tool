@@ -10,7 +10,7 @@ const ProductMetricsModule = {
     },
 
     render() {
-        const pm = window.APERO_DATA.productMetrics;
+        const pm = window.PANDAWIND_DATA.productMetrics;
         const kpis = pm.kpis;
 
         return `
@@ -25,7 +25,7 @@ const ProductMetricsModule = {
                 </div>
             </div>
 
-            <!-- Filter Strip (Matching Original Apero Header) -->
+            <!-- Filter Strip (Matching Original PandaWind Header) -->
             <div class="filter-toolbar">
                 <div class="filter-group-left">
                     <select class="filter-select" onchange="ProductMetricsModule.setUserType(this.value)">
@@ -144,11 +144,11 @@ const ProductMetricsModule = {
     },
 
     initCharts() {
-        const retData = window.APERO_DATA.productMetrics.retentionCurve;
+        const retData = window.PANDAWIND_DATA.productMetrics.retentionCurve;
         const labels = retData.map(r => r.day);
         const vals = retData.map(r => r.retention);
 
-        window.AperoCharts.renderLineChart('retentionCurveCanvas', {
+        window.PandaWindCharts.renderLineChart('retentionCurveCanvas', {
             labels: labels,
             datasets: [
                 {

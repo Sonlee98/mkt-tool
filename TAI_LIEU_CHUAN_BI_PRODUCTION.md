@@ -1,12 +1,12 @@
 # Tài Liệu Chuẩn Bị Chạy Thật (Production Checklist)
-**Hệ thống:** Apero MktPro — Phân hệ **Tạo Camp Hàng Loạt (Bulk Campaign Creation)** & **Báo Cáo Realtime (Realtime Intraday Report)**  
+**Hệ thống:** PandaWind MktPro — Phân hệ **Tạo Camp Hàng Loạt (Bulk Campaign Creation)** & **Báo Cáo Realtime (Realtime Intraday Report)**  
 **Cập nhật:** 20/11/2026
 
 ---
 
 ## Tổng Quan Kiến Trúc & Dữ Liệu Dùng Chung
 
-Cả hai chức năng chạy trên cùng một Backend (`Node.js + TypeScript + Fastify` tại cổng `4000`) và chung Database PostgreSQL (`apero_mktpro`):
+Cả hai chức năng chạy trên cùng một Backend (`Node.js + TypeScript + Fastify` tại cổng `4000`) và chung Database PostgreSQL (`pandawind_mktpro`):
 
 - **Dữ liệu nền dùng chung**: Bảng `products`, `marketers`, `ad_accounts` (cột `access_token` và `api_config`), `campaigns`, `telemetry_logs`, `system_settings`.
 - **Cơ chế chuyển chế độ `server_sandbox` $\leftrightarrow$ `live_api`**:
@@ -25,12 +25,12 @@ Cả hai chức năng chạy trên cùng một Backend (`Node.js + TypeScript + 
   2. **Cung cấp URL Media công khai (`PUBLIC_MEDIA_BASE_URL`)**: Khi set biến môi trường `PUBLIC_MEDIA_BASE_URL`, hệ thống sẽ gửi `file_url` để Meta tự kéo video `.mp4` qua đường truyền Server-to-Server (nhanh hơn upload binary trực tiếp khi chạy nhiều luồng). Lưu ý chỉ định thư mục tĩnh tại `/uploads/creatives/<ten-file>`.
 
 ### 1.2. Tham số Kinh doanh & Quy chuẩn Mã Định Danh (`.env` / `system_settings`)
-Tập tin cấu hình hiện tại: `apero-mktpro/backend/.env`
+Tập tin cấu hình hiện tại: `mkt-tool/backend/.env`
 
 ```ini
 # --- CẤU HÌNH HIỆN CÓ ---
 PORT=4000
-DATABASE_URL=postgres://apero:apero123@127.0.0.1:5434/apero_mktpro
+DATABASE_URL=postgres://pandawind:pandawind123@127.0.0.1:5434/pandawind_mktpro
 TIMEZONE=Asia/Ho_Chi_Minh
 SYNC_WORKER_INTERVAL_MS=8000
 SYNC_WORKER_ENABLED=true
@@ -80,7 +80,7 @@ Các thông tin dưới đây được khai báo tại phân hệ **Template Man
 Mỗi App cần tạo bản ghi `app_templates` gồm:
 - **`store_type`**: `GOOGLE_PLAY` hoặc `APP_STORE`.
 - **`bundle_id`**:
-  - Android: Package Name chính xác trên Play Store (VD: `com.apero.aivideo`).
+  - Android: Package Name chính xác trên Play Store (VD: `com.pandawind.aivideo`).
   - iOS: Numeric App Store ID (VD: `6471928310`).
 - **`store_url`**: URL đầy đủ trên Google Play / App Store.
 - **`platform_app_id`**: Mã **Facebook Application ID** (tạo trên Meta for Developers, đã liên kết SDK/MMP với Ad Account để chạy `OUTCOME_APP_PROMOTION`).
@@ -165,7 +165,7 @@ Trong trường hợp một số kênh chưa gắn xong API/Webhook, hệ thốn
 Khi bạn chuẩn bị xong các thông tin ở Phần 1–3, cần mở rộng thêm 4 điểm kỹ thuật nhỏ trong code trước khi chạy ngân sách lớn:
 
 1. **Auto-Refresh Google OAuth Token**: `access_token` của Google chỉ có hạn 60 phút — bổ sung hàm tự động gọi `https://oauth2.googleapis.com/token` bằng `client_id`, `client_secret`, `refresh_token` để gia hạn mỗi 55 phút trước khi gọi Google Ads API.
-2. **Nối luồng đọc Spend trực tiếp cho Google Ads (GAQL)**: Hiện `fetchLivePlatformInsights` trong `apero-mktpro/backend/src/adapters/adPlatformAdapters.ts` đã viết sẵn API đọc insights cho `Facebook` và `TikTok`; cần bổ sung truy vấn `googleAds:searchStream` cho `Google Ads` (và `Mintegral` nếu chạy) để tự động kéo `Spend` theo giờ về bảng Intraday.
+2. **Nối luồng đọc Spend trực tiếp cho Google Ads (GAQL)**: Hiện `fetchLivePlatformInsights` trong `mkt-tool/backend/src/adapters/adPlatformAdapters.ts` đã viết sẵn API đọc insights cho `Facebook` và `TikTok`; cần bổ sung truy vấn `googleAds:searchStream` cho `Google Ads` (và `Mintegral` nếu chạy) để tự động kéo `Spend` theo giờ về bảng Intraday.
 3. **Tách bạch nguồn ghi `Spend` vs `Revenue/Installs` ở chế độ Live**: Bỏ hệ số nhân doanh thu tạm thời trong `fetchLivePlatformInsights` (`adPlatformAdapters.ts`) khi chạy Live để *Ad Network API chỉ cập nhật `Spend`*, còn *MMP Webhook chỉ cập nhật `Installs`, `Cohort Rev` và `Cutoff Rev`*, tránh ghi đè chéo dữ liệu thật.
 4. **Cầu chì an toàn Production**:
    - Bật kiểm tra header chữ ký/`WEBHOOK_SECRET` trên `POST /api/v1/webhooks/:source`.
@@ -217,6 +217,6 @@ Mục này tách riêng toàn bộ khóa xác thực (Credentials) cần chuẩn
 
 4. **MMP, ILRD & Bảo mật Webhook (`WEBHOOK_SECRET`)**:
    - **`WEBHOOK_SECRET`**: Bạn tự tạo chuỗi ngẫu nhiên (VD: `apr_wh_live_...`), cấu hình vào `backend/.env` và gắn vào **Custom HTTP Header** (`Authorization: Bearer <WEBHOOK_SECRET>`) trên **AppsFlyer Push API** / **Adjust Real-time Callbacks** để chặn request giả mạo từ bên ngoài bắn sai lệch báo cáo.
-   - **Key Mediation (AppLovin MAX / AdMob)**: Không cần nhập vào Apero MktPro — chỉ cần dán vào phần *Ad Revenue / ILRD Integration* trên Dashboard của MMP (AppsFlyer/Adjust) để MMP thu được doanh thu quảng cáo in-app và đẩy gộp sang Webhook `/api/v1/webhooks/:source`.
+   - **Key Mediation (AppLovin MAX / AdMob)**: Không cần nhập vào PandaWind MktPro — chỉ cần dán vào phần *Ad Revenue / ILRD Integration* trên Dashboard của MMP (AppsFlyer/Adjust) để MMP thu được doanh thu quảng cáo in-app và đẩy gộp sang Webhook `/api/v1/webhooks/:source`.
    - **Google Sheets**: Nếu file Sheet đối soát đã bật *"Anyone with the link can view"* hoặc *"Publish to Web (CSV)"* thì nút `GGSheet` kéo trực tiếp không cần bất kỳ API Key nào; chỉ cần `Service Account JSON` khi yêu cầu bảo mật nội bộ không cho mở link xem.
 

@@ -4,7 +4,7 @@
 
 const MonetizationModule = {
     render() {
-        const mon = window.APERO_DATA.monetization;
+        const mon = window.PANDAWIND_DATA.monetization;
         const s = mon.summary;
 
         return `
@@ -48,7 +48,7 @@ const MonetizationModule = {
                     Mạng Quảng Cáo Hòa Giải (Ad Mediation Networks)
                 </div>
                 <div class="table-responsive">
-                    <table class="apero-table">
+                    <table class="pandawind-table">
                         <thead>
                             <tr>
                                 <th>Mạng Quảng Cáo</th>
@@ -81,7 +81,7 @@ const MonetizationModule = {
                     Cơ Cấu Gói Đăng Ký In-App Purchase (IAP)
                 </div>
                 <div class="table-responsive">
-                    <table class="apero-table">
+                    <table class="pandawind-table">
                         <thead>
                             <tr>
                                 <th>Gói Sản Phẩm (Plan)</th>

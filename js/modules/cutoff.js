@@ -10,8 +10,8 @@ const CutoffModule = {
     },
 
     render() {
-        const data = window.APERO_DATA.cutoff;
-        const config = window.APERO_DATA.config;
+        const data = window.PANDAWIND_DATA.cutoff;
+        const config = window.PANDAWIND_DATA.config;
         const s = data.summary;
         const isVnd = config.currency === 'VND';
 
@@ -161,7 +161,7 @@ const CutoffModule = {
             <!-- Cutoff Data Table -->
             <div class="data-table-container">
                 <div class="table-responsive">
-                    <table class="apero-table">
+                    <table class="pandawind-table">
                         <thead>
                             <tr>
                                 <th>No.</th>
@@ -240,14 +240,14 @@ const CutoffModule = {
         const rows = [
             ['No', 'Date', 'App', 'DAU', 'New Users', 'Paid Installs', 'CPI', 'Cutoff Rev USD', 'Cost USD', 'Profit USD', 'PL2 %']
         ];
-        window.APERO_DATA.cutoff.dailyData.forEach(r => {
+        window.PANDAWIND_DATA.cutoff.dailyData.forEach(r => {
             rows.push([r.id, r.date, 'AIP922', r.dau, r.newFirstOpen, r.paidInstall, r.cpi, r.cutoffRev, r.cost, r.profit, r.pl2]);
         });
         let csvContent = "data:text/csv;charset=utf-8," + rows.map(e => e.join(",")).join("\n");
         const encodedUri = encodeURI(csvContent);
         const link = document.createElement("a");
         link.setAttribute("href", encodedUri);
-        link.setAttribute("download", `Apero_Cutoff_Report_${new Date().toISOString().slice(0, 10)}.csv`);
+        link.setAttribute("download", `PandaWind_Cutoff_Report_${new Date().toISOString().slice(0, 10)}.csv`);
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
@@ -255,12 +255,12 @@ const CutoffModule = {
     },
 
     initCharts() {
-        const daily = window.APERO_DATA.cutoff.dailyData.slice(0, 12).reverse();
+        const daily = window.PANDAWIND_DATA.cutoff.dailyData.slice(0, 12).reverse();
         const labels = daily.map(d => d.date.replace(', 2026', ''));
         const revData = daily.map(d => d.cutoffRev / 1000);
         const costData = daily.map(d => d.cost / 1000);
 
-        window.AperoCharts.renderLineChart('cutoffTrendCanvas', {
+        window.PandaWindCharts.renderLineChart('cutoffTrendCanvas', {
             labels: labels,
             datasets: [
                 {
@@ -281,8 +281,8 @@ const CutoffModule = {
         });
 
         // Donut Chart
-        const countries = window.APERO_DATA.cutoff.countries;
-        window.AperoCharts.renderDonutChart('cutoffCountryDonutCanvas', {
+        const countries = window.PANDAWIND_DATA.cutoff.countries;
+        window.PandaWindCharts.renderDonutChart('cutoffCountryDonutCanvas', {
             labels: countries.slice(0, 5).map(c => c.country),
             data: countries.slice(0, 5).map(c => c.cutoffRev),
             colors: ['#3b82f6', '#10b981', '#f59e0b', '#8b5cf6', '#ec4899'],

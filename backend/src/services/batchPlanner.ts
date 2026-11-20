@@ -403,7 +403,7 @@ export async function buildBulkLaunchPlan(creativeIds: string[], packageIds: str
                 ? 'live_api'
                 : 'server_sandbox';
 
-        const ytPoolScope = (pkg.api_config?.youtube_channel_id as string) || 'yt_apero_uac_pool_01';
+        const ytPoolScope = (pkg.api_config?.youtube_channel_id as string) || 'yt_pandawind_uac_pool_01';
 
         let pkgAdGroups = 0;
         let pkgAds = 0;

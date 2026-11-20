@@ -90,7 +90,7 @@ async function main() {
         decorateReply: false
     });
 
-    // Serve Apero MktPro Frontend static files from parent folder
+    // Serve PandaWind MktPro Frontend static files from parent folder
     await app.register(fastifyStatic, {
         root: config.frontendDir,
         prefix: '/',
@@ -104,7 +104,7 @@ async function main() {
     }
     bulkLaunchWorker.start();
 
-    console.log(`[Server] Apero MktPro running at http://localhost:${config.port}`);
+    console.log(`[Server] PandaWind MktPro running at http://localhost:${config.port}`);
 }
 
 main().catch((err) => {

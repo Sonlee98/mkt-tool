@@ -1,12 +1,12 @@
 /**
- * Apero MktPro Canvas Chart Engine (Enhanced Interactive Version)
+ * PandaWind MktPro Canvas Chart Engine (Enhanced Interactive Version)
  * Lightweight, zero-dependency, high-DPI canvas charts with interactive crosshair & tooltips
  * 
  * FIX: Canvas is sized ONCE per renderLineChart call. The draw() closure reuses
  *      cached dimensions so mousemove never triggers a resize feedback loop.
  */
 
-const AperoCharts = {
+const PandaWindCharts = {
     charts: {},
 
     /**
@@ -414,4 +414,4 @@ const AperoCharts = {
     }
 };
 
-window.AperoCharts = AperoCharts;
+window.PandaWindCharts = PandaWindCharts;

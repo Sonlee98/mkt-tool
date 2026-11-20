@@ -21,16 +21,16 @@ const RealtimeEngine = {
         this.connectSse();
 
         // Lắng nghe custom event cho developer test nhanh qua Console -> đẩy thẳng vào Webhook API
-        window.addEventListener('apero:api-update', async (event) => {
+        window.addEventListener('pandawind:api-update', async (event) => {
             if (!event.detail) return;
             await this.pushUpdate(event.detail, event.detail.source || 'Browser CustomEvent');
         });
     },
 
     async loadTelemetry() {
-        if (!window.AperoApi) return;
+        if (!window.PandaWindApi) return;
         try {
-            const res = await window.AperoApi.getTelemetry(40);
+            const res = await window.PandaWindApi.getTelemetry(40);
             if (res && res.ok) {
                 this.state.backendConnected = true;
                 this.state.logs = res.logs || [];
@@ -49,12 +49,12 @@ const RealtimeEngine = {
     },
 
     connectSse() {
-        if (!window.AperoApi) return;
+        if (!window.PandaWindApi) return;
         if (this.state.eventSource) {
             this.state.eventSource.close();
         }
 
-        this.state.eventSource = window.AperoApi.connectRealtimeStream({
+        this.state.eventSource = window.PandaWindApi.connectRealtimeStream({
             onConnected: (data) => {
                 this.state.backendConnected = true;
                 if (data && data.worker) {
@@ -95,16 +95,16 @@ const RealtimeEngine = {
             },
 
             onError: () => {
-                this.state.backendConnected = window.AperoApi.isBackendOnline;
+                this.state.backendConnected = window.PandaWindApi.isBackendOnline;
                 this.updateHeaderBadge();
             }
         });
     },
 
     async toggle() {
-        if (!window.AperoApi) return;
+        if (!window.PandaWindApi) return;
         try {
-            const res = await window.AperoApi.toggleWorker();
+            const res = await window.PandaWindApi.toggleWorker();
             if (res && res.worker) {
                 this.state.isRunning = res.worker.isRunning;
                 this.state.syncCount = res.worker.syncCount;
@@ -123,9 +123,9 @@ const RealtimeEngine = {
     },
 
     async triggerNow() {
-        if (!window.AperoApi) return;
+        if (!window.PandaWindApi) return;
         try {
-            await window.AperoApi.triggerWorker('Manual Telemetry Trigger');
+            await window.PandaWindApi.triggerWorker('Manual Telemetry Trigger');
             App.showToast('Đã kích hoạt đồng bộ gói tin mới vào PostgreSQL!', 'success');
         } catch (err) {
             App.showToast(`Lỗi đồng bộ: ${err.message}`, 'danger');
@@ -136,9 +136,9 @@ const RealtimeEngine = {
      * API cho Developer test gửi webhook trực tiếp từ Browser Console
      */
     async pushUpdate(payload, source = 'Browser Console Webhook') {
-        if (window.AperoApi) {
+        if (window.PandaWindApi) {
             try {
-                await window.AperoApi.sendWebhook('custom', Object.assign({ source }, payload));
+                await window.PandaWindApi.sendWebhook('custom', Object.assign({ source }, payload));
                 return;
             } catch (err) {
                 App.showToast(`Webhook error: ${err.message}`, 'danger');
@@ -232,7 +232,7 @@ const RealtimeEngine = {
     },
 
     renderTelemetryModalContents(modal) {
-        const base = (window.AperoApi && window.AperoApi.baseUrl) || window.location.origin;
+        const base = (window.PandaWindApi && window.PandaWindApi.baseUrl) || window.location.origin;
         const webhookUrl = `${base}/api/v1/webhooks/appsflyer`;
 
         modal.innerHTML = `

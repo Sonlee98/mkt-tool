@@ -358,7 +358,7 @@ AIP886,TikTok,AIP886_TikTok_Viral,#992,PE,15M,12000000,14500000,3100</pre>
         };
 
         try {
-            await window.AperoApi.createIntradayCampaign(payload);
+            await window.PandaWindApi.createIntradayCampaign(payload);
             App.showToast(`Đã lưu chiến dịch ${payload.campaignName} vào PostgreSQL!`, 'success');
             if (window.IntradayModule) window.IntradayModule._lastFetchAt = 0;
             setTimeout(() => App.setRoute('intraday'), 350);
@@ -376,7 +376,7 @@ AIP886,TikTok,AIP886_TikTok_Viral,#992,PE,15M,12000000,14500000,3100</pre>
         const rev = parseFloat(document.getElementById('inputCutoffRev').value);
 
         const newRow = {
-            id: window.APERO_DATA.cutoff.dailyData.length + 1,
+            id: window.PANDAWIND_DATA.cutoff.dailyData.length + 1,
             date, dau, newFirstOpen: installs, paidInstall: installs,
             cpi: parseFloat((cost / (parseFloat(installs) * 1000 || 1)).toFixed(4)),
             cutoffRev: rev, cost, profit: rev - cost,
@@ -384,7 +384,7 @@ AIP886,TikTok,AIP886_TikTok_Viral,#992,PE,15M,12000000,14500000,3100</pre>
             country, channel: 'All'
         };
 
-        window.APERO_DATA.cutoff.dailyData.unshift(newRow);
+        window.PANDAWIND_DATA.cutoff.dailyData.unshift(newRow);
         App.showToast(`Đã thêm dòng Cutoff ngày ${date}!`, 'success');
         setTimeout(() => App.setRoute('cutoff'), 400);
     },
@@ -398,7 +398,7 @@ AIP886,TikTok,AIP886_TikTok_Viral,#992,PE,15M,12000000,14500000,3100</pre>
             const text = e.target.result;
             const previewEl = document.getElementById('csvPreviewArea');
             try {
-                const res = await window.AperoApi.importCsv(text);
+                const res = await window.PandaWindApi.importCsv(text);
                 this.state.lastCsvPreview = `
                     <div style="padding: 12px 14px; border-radius: var(--radius-md); background: var(--success-light); color: var(--success-text); font-size: 13px; font-weight: 600;">
                         ✓ Đã import thành công ${res.importedCount} dòng từ tệp "${file.name}" vào PostgreSQL!
@@ -426,7 +426,7 @@ AIP886,TikTok,AIP886_TikTok_Viral,#992,PE,15M,12000000,14500000,3100</pre>
         const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
         const link = document.createElement("a");
         link.href = URL.createObjectURL(blob);
-        link.download = "apero_mktpro_sample_import.csv";
+        link.download = "pandawind_mktpro_sample_import.csv";
         link.click();
         App.showToast('Đã tải xuống tệp CSV mẫu chuẩn!', 'success');
     },
@@ -471,7 +471,7 @@ AIP886,TikTok,AIP886_TikTok_Viral,#992,PE,15M,12000000,14500000,3100</pre>
 
         try {
             const parsed = JSON.parse(val);
-            const res = await window.AperoApi.importJson(parsed);
+            const res = await window.PandaWindApi.importJson(parsed);
             if (window.IntradayModule) window.IntradayModule._lastFetchAt = 0;
             App.showToast(`Đã đồng bộ ${res.importedCount} bản ghi JSON vào PostgreSQL!`, 'success');
             setTimeout(() => App.setRoute('intraday'), 450);
@@ -490,7 +490,7 @@ AIP886,TikTok,AIP886_TikTok_Viral,#992,PE,15M,12000000,14500000,3100</pre>
         }
         if (statusEl) statusEl.textContent = 'Đang đồng bộ từ Google Sheets...';
         try {
-            const res = await window.AperoApi.syncGoogleSheet(url);
+            const res = await window.PandaWindApi.syncGoogleSheet(url);
             if (statusEl) statusEl.innerHTML = `<span style="color:#10b981;">✓ Đã nhập ${res.importedCount} dòng từ Google Sheets!</span>`;
             if (window.IntradayModule) window.IntradayModule._lastFetchAt = 0;
             App.showToast(`Đồng bộ Google Sheets thành công (${res.importedCount} dòng)!`, 'success');

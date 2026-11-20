@@ -28,7 +28,7 @@ async function postJson<T>(
 }
 
 async function main() {
-    console.log(`Running Apero MktPro Priority-1 Production Guardrails & Security E2E Verification against ${BASE_URL}...`);
+    console.log(`Running PandaWind MktPro Priority-1 Production Guardrails & Security E2E Verification against ${BASE_URL}...`);
 
     try {
         // 1. Health reports security metadata

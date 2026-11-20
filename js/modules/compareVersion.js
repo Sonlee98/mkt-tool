@@ -10,7 +10,7 @@ const CompareVersionModule = {
     },
 
     render() {
-        const comp = window.APERO_DATA.versionComparison;
+        const comp = window.PANDAWIND_DATA.versionComparison;
 
         const categories = ['All', 'Chỉ số hệ quả', 'LTV', 'Retention', 'Churn', 'LTFE (Final Event)'];
 
@@ -86,7 +86,7 @@ const CompareVersionModule = {
             <!-- Comparative Data Table -->
             <div class="data-table-container">
                 <div class="table-responsive">
-                    <table class="apero-table">
+                    <table class="pandawind-table">
                         <thead>
                             <tr>
                                 <th>Nhóm Chỉ Số</th>
@@ -143,7 +143,7 @@ const CompareVersionModule = {
         const vAData = [0.045, 0.068, 0.089, 0.112, 0.145, 0.182];
         const vBData = [0.052, 0.081, 0.108, 0.138, 0.182, 0.231];
 
-        window.AperoCharts.renderBarChart('compareLtvBarCanvas', {
+        window.PandaWindCharts.renderBarChart('compareLtvBarCanvas', {
             labels: labels,
             datasets: [
                 {

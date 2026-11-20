@@ -17,7 +17,7 @@ const TacticsModule = {
     },
 
     getTacticsList() {
-        return this.state.cache || window.APERO_DATA.tactics || [];
+        return this.state.cache || window.PANDAWIND_DATA.tactics || [];
     },
 
     render() {
@@ -62,7 +62,7 @@ const TacticsModule = {
             <!-- Tactics Table -->
             <div class="data-table-container">
                 <div class="table-responsive">
-                    <table class="apero-table">
+                    <table class="pandawind-table">
                         <thead>
                             <tr>
                                 <th>Tactic Name</th>
@@ -199,10 +199,10 @@ const TacticsModule = {
     },
 
     async loadData(force = false) {
-        if (!window.AperoApi || (this.state.loading && !force)) return;
+        if (!window.PandaWindApi || (this.state.loading && !force)) return;
         this.state.loading = true;
         try {
-            const res = await window.AperoApi.getTactics();
+            const res = await window.PandaWindApi.getTactics();
             if (res && res.ok) {
                 this.state.cache = res.items || [];
                 this.refreshDom();
@@ -269,8 +269,8 @@ const TacticsModule = {
         }
 
         try {
-            if (window.AperoApi) {
-                await window.AperoApi.createTactic({
+            if (window.PandaWindApi) {
+                await window.PandaWindApi.createTactic({
                     name,
                     description,
                     rules: this.state.newRules.filter(r => r.if && r.then),
@@ -288,8 +288,8 @@ const TacticsModule = {
     async toggleStatus(id, checked) {
         const nextStatus = checked ? 'Active' : 'Paused';
         try {
-            if (window.AperoApi) {
-                await window.AperoApi.updateTactic(id, { status: nextStatus });
+            if (window.PandaWindApi) {
+                await window.PandaWindApi.updateTactic(id, { status: nextStatus });
                 App.showToast(`Tactic đã chuyển trạng thái: ${nextStatus}`, 'info');
                 await this.loadData(true);
             }
@@ -300,9 +300,9 @@ const TacticsModule = {
 
     async cloneTactic(id) {
         const t = this.getTacticsList().find(x => String(x.id) === String(id));
-        if (!t || !window.AperoApi) return;
+        if (!t || !window.PandaWindApi) return;
         try {
-            await window.AperoApi.createTactic({
+            await window.PandaWindApi.createTactic({
                 name: `${t.name}_Copy`,
                 description: t.description,
                 rules: t.rules || [],

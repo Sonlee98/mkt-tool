@@ -9,7 +9,7 @@ const AdminModule = {
     securityCache: null,
 
     render() {
-        const admin = window.APERO_DATA.administration;
+        const admin = window.PANDAWIND_DATA.administration;
         const accounts = this.accountsCache || admin.adAccounts.map(a => ({
             id: a.id,
             name: a.name,
@@ -51,7 +51,7 @@ const AdminModule = {
                     <span class="badge badge-success" id="adminAccountCountBadge">${accounts.length} Tài Khoản</span>
                 </div>
                 <div class="table-responsive">
-                    <table class="apero-table">
+                    <table class="pandawind-table">
                         <thead>
                             <tr>
                                 <th>Tên Tài Khoản</th>
@@ -77,7 +77,7 @@ const AdminModule = {
                     Thành Viên Đội Ngũ Tăng Trưởng (Growth & Marketing Team)
                 </div>
                 <div class="table-responsive">
-                    <table class="apero-table">
+                    <table class="pandawind-table">
                         <thead>
                             <tr>
                                 <th>Họ và Tên</th>
@@ -115,7 +115,7 @@ const AdminModule = {
                     Nhật Ký Đồng Bộ API & Tác Vụ Tự Động (PostgreSQL Audit Log)
                 </div>
                 <div class="table-responsive">
-                    <table class="apero-table">
+                    <table class="pandawind-table">
                         <thead>
                             <tr>
                                 <th>Thời Gian</th>
@@ -157,7 +157,7 @@ const AdminModule = {
                             <div class="form-row-2">
                                 <div class="form-group">
                                     <label class="form-label required">Tên Tài Khoản</label>
-                                    <input type="text" class="form-input" id="accNameInput" required placeholder="e.g. BM_Apero_Europe_01">
+                                    <input type="text" class="form-input" id="accNameInput" required placeholder="e.g. BM_PandaWind_Europe_01">
                                 </div>
                                 <div class="form-group">
                                     <label class="form-label">Tiền tệ & Số dư (USD)</label>
@@ -231,7 +231,7 @@ const AdminModule = {
             maxCampaignDailyBudgetUsd: 2000,
             maxBatchDailyBudgetUsd: 10000
         };
-        const currentAdminKey = typeof localStorage !== 'undefined' ? (localStorage.getItem('apero_admin_key') || '') : '';
+        const currentAdminKey = typeof localStorage !== 'undefined' ? (localStorage.getItem('pandawind_admin_key') || '') : '';
         return `
             <div style="display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:12px;">
                 <div style="display:flex; flex-wrap:wrap; align-items:center; gap:10px; font-size:12px;">
@@ -300,12 +300,12 @@ const AdminModule = {
     },
 
     async loadData() {
-        if (!window.AperoApi) return;
+        if (!window.PandaWindApi) return;
         try {
             const [accRes, telRes, secRes] = await Promise.all([
-                window.AperoApi.getAdAccounts(),
-                window.AperoApi.getTelemetry(15),
-                window.AperoApi.getSecurityConfig().catch(() => null)
+                window.PandaWindApi.getAdAccounts(),
+                window.PandaWindApi.getTelemetry(15),
+                window.PandaWindApi.getSecurityConfig().catch(() => null)
             ]);
             if (secRes && secRes.ok) {
                 this.securityCache = secRes;
@@ -332,7 +332,7 @@ const AdminModule = {
     async saveWebhookSecret() {
         const val = document.getElementById('adminWebhookSecretInput')?.value.trim() || '';
         try {
-            await window.AperoApi.saveSecurityConfig({ webhookSecret: val });
+            await window.PandaWindApi.saveSecurityConfig({ webhookSecret: val });
             App.showToast(val ? '🔒 Đã cập nhật WEBHOOK_SECRET xác thực MMP!' : 'Đã tắt WEBHOOK_SECRET runtime.', 'success');
             await this.loadData();
         } catch (err) {
@@ -342,7 +342,7 @@ const AdminModule = {
 
     async saveSessionAdminKey() {
         const key = document.getElementById('adminSessionKeyInput')?.value.trim() || '';
-        window.AperoApi.setAdminKey(key);
+        window.PandaWindApi.setAdminKey(key);
         App.showToast(key ? '🔐 Đã gắn x-admin-key cho phiên làm việc!' : 'Đã xóa x-admin-key khỏi trình duyệt.', 'info');
         await this.loadData();
     },
@@ -350,7 +350,7 @@ const AdminModule = {
     async syncAccount(accountId) {
         App.showToast(`Đang đồng bộ tài khoản ${accountId}...`, 'info');
         try {
-            const res = await window.AperoApi.syncAdAccount(accountId);
+            const res = await window.PandaWindApi.syncAdAccount(accountId);
             App.showToast(
                 `Đồng bộ thành công (${res.mode === 'live_api' ? 'Live API' : 'Server Sandbox'}): +${Math.round(res.spendDeltaTotal).toLocaleString('vi-VN')} đ!`,
                 'success'
@@ -447,7 +447,7 @@ const AdminModule = {
         };
 
         try {
-            await window.AperoApi.saveAdAccount(payload);
+            await window.PandaWindApi.saveAdAccount(payload);
             this.closeAccountModal();
             App.showToast(`🔒 Đã lưu & mã hóa cấu hình tài khoản ${payload.name}!`, 'success');
             await this.loadData();

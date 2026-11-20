@@ -19,7 +19,7 @@ async function postJson<T>(url: string, body?: unknown): Promise<{ status: numbe
 }
 
 async function main() {
-    console.log(`Running Apero MktPro Backend E2E Verification against ${BASE_URL}...`);
+    console.log(`Running PandaWind MktPro Backend E2E Verification against ${BASE_URL}...`);
 
     // 1. Health check
     const health = await getJson<{ ok: boolean; db: string }>('/api/v1/health');
@@ -148,7 +148,7 @@ async function main() {
     const htmlResp = await fetch(`${BASE_URL}/`);
     assert.equal(htmlResp.status, 200);
     const htmlText = await htmlResp.text();
-    assert.ok(htmlText.includes('Apero MktPro'));
+    assert.ok(htmlText.includes('PandaWind MktPro'));
     console.log('✓ 10. Frontend static hosting verified');
 
     console.log('\nALL E2E CHECKS PASSED!');

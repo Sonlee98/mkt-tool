@@ -1,5 +1,5 @@
 /**
- * Apero MktPro - Main Application Controller
+ * PandaWind MktPro - Main Application Controller
  * Handles routing, themes, currency, product switcher, search, notifications, and toasts
  */
 
@@ -15,10 +15,10 @@ const App = {
     init() {
         try {
             // Load stored theme or default to dark
-            const savedTheme = localStorage.getItem('apero_theme') || 'dark';
+            const savedTheme = localStorage.getItem('pandawind_theme') || 'dark';
             document.documentElement.setAttribute('data-theme', savedTheme);
-            if (window.APERO_DATA && window.APERO_DATA.config) {
-                window.APERO_DATA.config.theme = savedTheme;
+            if (window.PANDAWIND_DATA && window.PANDAWIND_DATA.config) {
+                window.PANDAWIND_DATA.config.theme = savedTheme;
             }
 
             // Keyboard shortcuts (Ctrl+K for search)
@@ -54,7 +54,7 @@ const App = {
 
             // Initial route render
             this.renderRoute();
-            console.log("Apero MktPro initialized successfully.");
+            console.log("PandaWind MktPro initialized successfully.");
         } catch (err) {
             console.error("Initialization error:", err);
             const container = document.getElementById('mainContentArea');
@@ -66,8 +66,8 @@ const App = {
 
     renderNotifications() {
         const list = document.getElementById('notificationsPopoverList');
-        if (!list || !window.APERO_DATA || !window.APERO_DATA.notifications) return;
-        list.innerHTML = window.APERO_DATA.notifications.map(n => `
+        if (!list || !window.PANDAWIND_DATA || !window.PANDAWIND_DATA.notifications) return;
+        list.innerHTML = window.PANDAWIND_DATA.notifications.map(n => `
             <div style="padding: 12px 14px; border-bottom: 1px solid var(--border-color); display: flex; flex-direction: column; gap: 4px; font-size: 12px; cursor: pointer;" onmouseover="this.style.background='var(--bg-hover)'" onmouseout="this.style.background='transparent'">
                 <div style="display: flex; align-items: center; justify-content: space-between;">
                     <span style="font-weight: 700; color: var(--text-primary);">${n.title}</span>
@@ -214,13 +214,13 @@ const App = {
             'data-management': 'Data Management & Real-time Integration'
         };
 
-        const activeProd = window.APERO_DATA.products.find(p => p.id === window.APERO_DATA.config.activeProduct);
-        const prodName = window.APERO_DATA.config.activeProduct === 'All'
+        const activeProd = window.PANDAWIND_DATA.products.find(p => p.id === window.PANDAWIND_DATA.config.activeProduct);
+        const prodName = window.PANDAWIND_DATA.config.activeProduct === 'All'
             ? 'All Apps'
             : (activeProd ? activeProd.code : 'AIP922');
 
         breadcrumbEl.innerHTML = `
-            <span>Apero MktPro</span>
+            <span>PandaWind MktPro</span>
             <span class="breadcrumb-separator">/</span>
             <span style="color: var(--primary); font-weight: 600;">${prodName}</span>
             <span class="breadcrumb-separator">/</span>
@@ -240,15 +240,15 @@ const App = {
         const current = document.documentElement.getAttribute('data-theme') || 'dark';
         const next = current === 'dark' ? 'light' : 'dark';
         document.documentElement.setAttribute('data-theme', next);
-        localStorage.setItem('apero_theme', next);
-        window.APERO_DATA.config.theme = next;
+        localStorage.setItem('pandawind_theme', next);
+        window.PANDAWIND_DATA.config.theme = next;
         
         App.showToast(`Đã chuyển sang giao diện ${next === 'dark' ? 'Tối (Dark)' : 'Sáng (Light)'}`, 'info');
         this.renderRoute();
     },
 
     setCurrency(cur) {
-        window.APERO_DATA.config.currency = cur;
+        window.PANDAWIND_DATA.config.currency = cur;
 
         const btnVND = document.getElementById('btnCurVND');
         const btnUSD = document.getElementById('btnCurUSD');
@@ -260,7 +260,7 @@ const App = {
     },
 
     toggleCurrency() {
-        const cur = window.APERO_DATA.config.currency;
+        const cur = window.PANDAWIND_DATA.config.currency;
         const next = cur === 'VND' ? 'USD' : 'VND';
         this.setCurrency(next);
     },
@@ -279,8 +279,8 @@ const App = {
     },
 
     selectProduct(prodId) {
-        window.APERO_DATA.config.activeProduct = prodId;
-        const prod = window.APERO_DATA.products.find(p => p.id === prodId);
+        window.PANDAWIND_DATA.config.activeProduct = prodId;
+        const prod = window.PANDAWIND_DATA.products.find(p => p.id === prodId);
 
         const label = document.getElementById('activeProductLabel');
         if (label) {

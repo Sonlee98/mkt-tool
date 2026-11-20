@@ -57,7 +57,7 @@ const IntradayModule = {
     },
 
     getFallbackReport() {
-        const d = window.APERO_DATA.intraday;
+        const d = window.PANDAWIND_DATA.intraday;
         const s = d.summary;
         const rate = 25718;
 
@@ -121,7 +121,7 @@ const IntradayModule = {
             hourly: d.hourly,
             treeData: d.treeData.map(mapNode),
             meta: {
-                products: window.APERO_DATA.products.map(p => ({ id: p.id, name: p.name })),
+                products: window.PANDAWIND_DATA.products.map(p => ({ id: p.id, name: p.name })),
                 marketers: [
                     { id: 'HoangNC', fullName: 'Nguyễn Công Hoàng' },
                     { id: 'TrangDQ', fullName: 'Đồng Quỳnh Trang' },
@@ -278,7 +278,7 @@ const IntradayModule = {
     },
 
     renderDynamicBody(report) {
-        const config = window.APERO_DATA.config;
+        const config = window.PANDAWIND_DATA.config;
         const s = report.summary;
         const gt = report.grandTotal || {};
         const rate = s.exchangeRate || 25718;
@@ -451,7 +451,7 @@ const IntradayModule = {
             <!-- Full Hierarchical AG-Grid Style Table -->
             <div class="data-table-container">
                 <div class="table-responsive" id="intradayTableWrap">
-                    <table class="apero-table">
+                    <table class="pandawind-table">
                         <thead>
                             <tr>
                                 <th style="min-width: 290px;">Product Id / Channel / Campaign</th>
@@ -495,7 +495,7 @@ const IntradayModule = {
             `;
         }
 
-        const config = window.APERO_DATA.config;
+        const config = window.PANDAWIND_DATA.config;
         const isVnd = config.currency === 'VND';
         const rate = (report.summary && report.summary.exchangeRate) || 25718;
 
@@ -648,7 +648,7 @@ const IntradayModule = {
     async toggleCampaignStatus(campaignId, checked) {
         const nextStatus = checked ? 'ON' : 'OFF';
         try {
-            await window.AperoApi.toggleCampaignStatus(campaignId, nextStatus);
+            await window.PandaWindApi.toggleCampaignStatus(campaignId, nextStatus);
             App.showToast(`Đã chuyển chiến dịch sang trạng thái ${nextStatus}`, 'success');
             await this.loadReport({ silent: true });
         } catch (err) {
@@ -687,12 +687,12 @@ const IntradayModule = {
     },
 
     syncProductHeaderAndPills(prodId) {
-        if (window.APERO_DATA && window.APERO_DATA.config) {
-            window.APERO_DATA.config.activeProduct = prodId;
+        if (window.PANDAWIND_DATA && window.PANDAWIND_DATA.config) {
+            window.PANDAWIND_DATA.config.activeProduct = prodId;
         }
         const label = document.getElementById('activeProductLabel');
         if (label) {
-            const prod = window.APERO_DATA.products.find(p => p.id === prodId);
+            const prod = window.PANDAWIND_DATA.products.find(p => p.id === prodId);
             label.textContent = prodId === 'All'
                 ? 'Tất cả sản phẩm (All)'
                 : (prod ? `${prod.code} - ${prod.name.split('-')[0].trim()}` : prodId);
@@ -723,10 +723,10 @@ const IntradayModule = {
     },
 
     async loadReport(options = {}) {
-        if (!window.AperoApi) return;
+        if (!window.PandaWindApi) return;
         try {
             this.state.isLoading = true;
-            const data = await window.AperoApi.getIntradayReport(this.getFilterParams());
+            const data = await window.PandaWindApi.getIntradayReport(this.getFilterParams());
             this.reportData = data;
             this._lastFetchAt = Date.now();
             this.ensureAutoExpand(data);
@@ -738,8 +738,8 @@ const IntradayModule = {
             }
 
             // Keep legacy global summary synced
-            if (window.APERO_DATA && window.APERO_DATA.intraday) {
-                Object.assign(window.APERO_DATA.intraday.summary, {
+            if (window.PANDAWIND_DATA && window.PANDAWIND_DATA.intraday) {
+                Object.assign(window.PANDAWIND_DATA.intraday.summary, {
                     spendVnd: data.summary.spendVnd,
                     cutoffRevVnd: data.summary.cutoffRevVnd,
                     roas: data.summary.roas,
@@ -823,13 +823,13 @@ const IntradayModule = {
     },
 
     exportExcel() {
-        const config = window.APERO_DATA.config;
-        if (window.AperoApi && window.AperoApi.isBackendOnline) {
+        const config = window.PANDAWIND_DATA.config;
+        if (window.PandaWindApi && window.PandaWindApi.isBackendOnline) {
             const params = Object.assign({}, this.getFilterParams(), { currency: config.currency });
-            const url = window.AperoApi.getExportCsvUrl(params);
+            const url = window.PandaWindApi.getExportCsvUrl(params);
             const link = document.createElement('a');
             link.href = url;
-            link.download = `Apero_Intraday_Report_${config.currency}.csv`;
+            link.download = `PandaWind_Intraday_Report_${config.currency}.csv`;
             document.body.appendChild(link);
             link.click();
             document.body.removeChild(link);
@@ -851,7 +851,7 @@ const IntradayModule = {
         const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
         const link = document.createElement('a');
         link.href = URL.createObjectURL(blob);
-        link.download = `Apero_Intraday_Offline_${new Date().toISOString().slice(0, 10)}.csv`;
+        link.download = `PandaWind_Intraday_Offline_${new Date().toISOString().slice(0, 10)}.csv`;
         link.click();
         App.showToast('Đã xuất file CSV (chế độ Offline)!', 'success');
     },
@@ -878,7 +878,7 @@ const IntradayModule = {
 
         if (statusEl) statusEl.textContent = 'Đang kết nối và kéo dữ liệu CSV từ Google Sheets...';
         try {
-            const res = await window.AperoApi.syncGoogleSheet(url);
+            const res = await window.PandaWindApi.syncGoogleSheet(url);
             if (statusEl) statusEl.textContent = `✓ Thành công! Đã đồng bộ ${res.importedCount} dòng vào PostgreSQL.`;
             App.showToast(`Đồng bộ GGSheet thành công (${res.importedCount} dòng)!`, 'success');
             this.closeGgsheetModal();
@@ -891,9 +891,9 @@ const IntradayModule = {
 
     drawChart(report) {
         const hourly = (report && report.hourly) || [];
-        if (hourly.length === 0 || !window.AperoCharts) return;
+        if (hourly.length === 0 || !window.PandaWindCharts) return;
 
-        const config = window.APERO_DATA.config;
+        const config = window.PANDAWIND_DATA.config;
         const isVnd = config.currency === 'VND';
         const rate = (report.summary && report.summary.exchangeRate) || 25718;
         const labels = hourly.map(h => h.hour);
@@ -907,7 +907,7 @@ const IntradayModule = {
                 : (v) => '$' + Math.round(v).toLocaleString('en-US');
             const yFmt = isVnd ? (v) => v.toFixed(1) + 'M' : (v) => '$' + Math.round(v);
 
-            window.AperoCharts.renderLineChart('intradayHourlyCanvas', {
+            window.PandaWindCharts.renderLineChart('intradayHourlyCanvas', {
                 labels,
                 datasets: [
                     {
@@ -931,7 +931,7 @@ const IntradayModule = {
             });
         } else if (this.state.chartMetric === 'roas') {
             const roasData = hourly.map(h => h.roas);
-            window.AperoCharts.renderLineChart('intradayHourlyCanvas', {
+            window.PandaWindCharts.renderLineChart('intradayHourlyCanvas', {
                 labels,
                 baselineY: 100,
                 datasets: [
@@ -948,7 +948,7 @@ const IntradayModule = {
             });
         } else {
             const installsData = hourly.map(h => h.installs);
-            window.AperoCharts.renderLineChart('intradayHourlyCanvas', {
+            window.PandaWindCharts.renderLineChart('intradayHourlyCanvas', {
                 labels,
                 datasets: [
                     {

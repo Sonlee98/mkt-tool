@@ -21,7 +21,7 @@ export async function intradayRoutes(app: FastifyInstance): Promise<void> {
             const currency = req.query.currency?.toUpperCase() === 'USD' ? 'USD' : 'VND';
             const report = await getIntradayReport(req.query);
             const csv = buildIntradayCsv(report, currency);
-            const filename = `Apero_Intraday_Report_${report.summary.date}_${currency}.csv`;
+            const filename = `PandaWind_Intraday_Report_${report.summary.date}_${currency}.csv`;
 
             reply
                 .header('Content-Type', 'text/csv; charset=utf-8')
