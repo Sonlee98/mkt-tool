@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="vi" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Apero MktPro - Marketing & Product Growth Intelligence Platform</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>⚡</text></svg>">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Sidebar Navigation -->
+        <aside class="app-sidebar" id="appSidebar">
+            <!-- Sidebar Header -->
+            <div class="sidebar-header">
+                <div class="logo-area" onclick="App.setRoute('intraday')">
+                    <div class="logo-icon">A</div>
+                    <div class="logo-text">
+                        <span class="logo-title">Apero MktPro</span>
+                        <span class="logo-subtitle">Growth Intelligence</span>
+                    </div>
+                </div>
+                <button class="sidebar-toggle-btn" onclick="App.toggleSidebar()" title="Thu nhỏ / Mở rộng sidebar">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 19l-7-7 7-7m8 14l-7-7 7-7"/></svg>
+                </button>
+            </div>
+
+            <!-- Sidebar Navigation Links -->
+            <nav class="sidebar-nav">
+                <!-- Section 1: Reports -->
+                <div class="nav-section-title">Reports & Analytics</div>
+                
+                <a class="nav-item active" data-route="intraday" onclick="App.setRoute('intraday')">
+                    <span class="nav-icon">⚡</span>
+                    <span class="nav-label">Intraday Report</span>
+                    <span class="nav-badge live">LIVE</span>
+                </a>
+
+                <!-- Marketing Report Submenu -->
+                <div class="nav-group">
+                    <div class="nav-item" onclick="App.setRoute('cutoff')">
+                        <span class="nav-icon">📈</span>
+                        <span class="nav-label">Marketing Report</span>
+                    </div>
+                    <div class="nav-submenu">
+                        <a class="nav-subitem" data-route="cutoff" onclick="App.setRoute('cutoff')">
+                            <span>• Cutoff Report</span>
+                        </a>
+                        <a class="nav-subitem" data-route="cohort" onclick="App.setRoute('cohort')">
+                            <span>• Cohort ROAS Heatmap</span>
+                        </a>
+                        <a class="nav-subitem" data-route="channel" onclick="App.setRoute('channel')">
+                            <span>• Channel Report</span>
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Product Report Submenu -->
+                <div class="nav-group">
+                    <div class="nav-item" onclick="App.setRoute('product-metrics')">
+                        <span class="nav-icon">📱</span>
+                        <span class="nav-label">Product Report</span>
+                    </div>
+                    <div class="nav-submenu">
+                        <a class="nav-subitem" data-route="product-metrics" onclick="App.setRoute('product-metrics')">
+                            <span>• Metrics Overview</span>
+                        </a>
+                        <a class="nav-subitem" data-route="compare-version" onclick="App.setRoute('compare-version')">
+                            <span>• Compare App Version</span>
+                        </a>
+                    </div>
+                </div>
+
+                <a class="nav-item" data-route="monetization" onclick="App.setRoute('monetization')">
+                    <span class="nav-icon">💰</span>
+                    <span class="nav-label">Monetization Report</span>
+                </a>
+
+                <a class="nav-item" data-route="business" onclick="App.setRoute('business')">
+                    <span class="nav-icon">🏢</span>
+                    <span class="nav-label">Business Report (P&L)</span>
+                </a>
+
+                <!-- Section 2: Campaign Automation -->
+                <div class="nav-section-title">Campaign Automation</div>
+
+                <a class="nav-item" data-route="templates" onclick="App.setRoute('templates')">
+                    <span class="nav-icon">📋</span>
+                    <span class="nav-label">Template Management</span>
+                </a>
+
+                <a class="nav-item" data-route="tactics" onclick="App.setRoute('tactics')">
+                    <span class="nav-icon">🧠</span>
+                    <span class="nav-label">Tactic Management</span>
+                    <span class="nav-badge" style="background:#f59e0b;">213</span>
+                </a>
+
+                <a class="nav-item" data-route="packages" onclick="App.setRoute('packages')">
+                    <span class="nav-icon">📦</span>
+                    <span class="nav-label">Package Management</span>
+                </a>
+
+                <a class="nav-item" data-route="creatives" onclick="App.setRoute('creatives')">
+                    <span class="nav-icon">🎬</span>
+                    <span class="nav-label">Creative Hub</span>
+                    <span class="nav-badge" style="background:#10b981;">32.1K</span>
+                </a>
+
+                <!-- Section 3: Data & Integrations -->
+                <div class="nav-section-title">Data & Integrations</div>
+
+                <a class="nav-item" data-route="data-management" onclick="App.setRoute('data-management')">
+                    <span class="nav-icon">💾</span>
+                    <span class="nav-label">Nhập Dữ Liệu Thật</span>
+                    <span class="nav-badge" style="background:#10b981; color:white;">NEW</span>
+                </a>
+
+                <!-- Section 4: System -->
+                <div class="nav-section-title">System & Administration</div>
+
+                <a class="nav-item" data-route="admin" onclick="App.setRoute('admin')">
+                    <span class="nav-icon">⚙️</span>
+                    <span class="nav-label">Administration</span>
+                </a>
+            </nav>
+
+            <!-- Sidebar User Profile Footer -->
+            <div class="sidebar-footer">
+                <div class="user-avatar">HT</div>
+                <div class="user-info">
+                    <div class="user-name">Đồng Quỳnh Trang</div>
+                    <div class="user-role">Creative & Growth Lead</div>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Workspace -->
+        <main class="app-main">
+            <!-- Top Header Navbar -->
+            <header class="app-header">
+                <div class="header-left">
+                    <div class="page-breadcrumb" id="headerBreadcrumb">
+                        <span>Apero MktPro</span>
+                        <span class="breadcrumb-separator">/</span>
+                        <span class="breadcrumb-current">Intraday Report</span>
+                    </div>
+
+                    <!-- Product Selector Pill Dropdown -->
+                    <div class="product-selector-wrapper">
+                        <button class="product-selector-btn" onclick="App.toggleProductDropdown()">
+                            <span class="product-badge-dot"></span>
+                            <span id="activeProductLabel">Tất cả sản phẩm (All)</span>
+                            <span style="font-size: 10px; color: var(--text-tertiary);">▼</span>
+                        </button>
+                        <div id="productDropdownMenu" style="display: none; position: absolute; top: calc(100% + 6px); left: 0; background: var(--bg-surface); border: 1px solid var(--border-color); border-radius: var(--radius-md); box-shadow: var(--shadow-lg); min-width: 280px; z-index: 50; padding: 6px;">
+                            <div style="padding: 6px 10px; font-size: 11px; font-weight: 700; text-transform: uppercase; color: var(--text-tertiary);">Chọn Sản Phẩm / Ứng Dụng</div>
+                            <div style="display: flex; flex-direction: column; gap: 2px;">
+                                <div style="padding: 8px 10px; border-radius: var(--radius-sm); cursor: pointer; display: flex; align-items: center; justify-content: space-between; font-size: 12.5px;" onmouseover="this.style.background='var(--bg-hover)'" onmouseout="this.style.background='transparent'" onclick="App.selectProduct('All')">
+                                    <div><strong>All Apps</strong> - Tất cả sản phẩm</div>
+                                    <span class="badge badge-info">5 Apps</span>
+                                </div>
+                                <div style="padding: 8px 10px; border-radius: var(--radius-sm); cursor: pointer; display: flex; align-items: center; justify-content: space-between; font-size: 12.5px;" onmouseover="this.style.background='var(--bg-hover)'" onmouseout="this.style.background='transparent'" onclick="App.selectProduct('AIP922')">
+                                    <div><strong>AIP922</strong> - Nexus AI Video</div>
+                                    <span class="badge badge-success">7.45M DAU</span>
+                                </div>
+                                <div style="padding: 8px 10px; border-radius: var(--radius-sm); cursor: pointer; display: flex; align-items: center; justify-content: space-between; font-size: 12.5px;" onmouseover="this.style.background='var(--bg-hover)'" onmouseout="this.style.background='transparent'" onclick="App.selectProduct('AIP886')">
+                                    <div><strong>AIP886</strong> - Framly AI Enhancer</div>
+                                    <span class="badge badge-neutral">4.20M DAU</span>
+                                </div>
+                                <div style="padding: 8px 10px; border-radius: var(--radius-sm); cursor: pointer; display: flex; align-items: center; justify-content: space-between; font-size: 12.5px;" onmouseover="this.style.background='var(--bg-hover)'" onmouseout="this.style.background='transparent'" onclick="App.selectProduct('AIP919')">
+                                    <div><strong>AIP919</strong> - GeniAI Creator</div>
+                                    <span class="badge badge-neutral">3.85M DAU</span>
+                                </div>
+                                <div style="padding: 8px 10px; border-radius: var(--radius-sm); cursor: pointer; display: flex; align-items: center; justify-content: space-between; font-size: 12.5px;" onmouseover="this.style.background='var(--bg-hover)'" onmouseout="this.style.background='transparent'" onclick="App.selectProduct('AAP885')">
+                                    <div><strong>AAP885</strong> - CloutDrama Short Films</div>
+                                    <span class="badge badge-neutral">1.92M DAU</span>
+                                </div>
+                                <div style="padding: 8px 10px; border-radius: var(--radius-sm); cursor: pointer; display: flex; align-items: center; justify-content: space-between; font-size: 12.5px;" onmouseover="this.style.background='var(--bg-hover)'" onmouseout="this.style.background='transparent'" onclick="App.selectProduct('AAP858')">
+                                    <div><strong>AAP858</strong> - AI Couple Companion</div>
+                                    <span class="badge badge-neutral">1.24M DAU</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="header-right">
+                    <!-- Realtime Engine Status Pill -->
+                    <div id="realtimeHeaderBadge" class="realtime-status-pill online" onclick="RealtimeEngine.showTelemetryModal()" title="Realtime Sync: Đang bật. Nhấn để xem Telemetry Logs.">
+                        <span class="live-dot-pulse"></span>
+                        <span class="status-text">LIVE SYNC</span>
+                    </div>
+
+                    <!-- Global Search Button (Ctrl+K) -->
+                    <button class="header-search-btn" onclick="App.openSearchModal()">
+                        <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+                        <span>Tìm kiếm chiến dịch, creatives...</span>
+                        <span class="search-kbd">Ctrl K</span>
+                    </button>
+
+                    <!-- Date Range Pill -->
+                    <div class="date-range-pill" onclick="App.showToast('Khoảng thời gian: 19/10/2026 - 18/11/2026 (30 ngày gần nhất)', 'info')">
+                        <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                        <span>19/10/2026 - 18/11/2026</span>
+                    </div>
+
+                    <!-- Currency Switcher Toggle -->
+                    <div class="currency-toggle">
+                        <button class="currency-btn active" id="btnCurVND" onclick="App.setCurrency('VND')">VND</button>
+                        <button class="currency-btn" id="btnCurUSD" onclick="App.setCurrency('USD')">USD</button>
+                    </div>
+
+                    <!-- Theme Switcher Button -->
+                    <button class="header-icon-btn" onclick="App.toggleTheme()" title="Chuyển đổi giao diện Sáng / Tối">
+                        <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/></svg>
+                    </button>
+
+                    <!-- Notifications Button with 99+ Badge -->
+                    <div class="notification-container" style="position: relative;">
+                        <button class="header-icon-btn" onclick="App.toggleNotifications()" title="Thông báo hệ thống">
+                            <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/></svg>
+                            <span class="header-badge">99+</span>
+                        </button>
+
+                        <!-- Notification Popover Dropdown -->
+                        <div id="notificationsPopover" style="display: none; position: absolute; top: calc(100% + 8px); right: 0; background: var(--bg-surface); border: 1px solid var(--border-color); border-radius: var(--radius-lg); box-shadow: var(--shadow-modal); width: 340px; z-index: 60; overflow: hidden;">
+                            <div style="padding: 12px 16px; border-bottom: 1px solid var(--border-color); display: flex; align-items: center; justify-content: space-between;">
+                                <span style="font-weight: 700; font-size: 13px;">Thông Báo Thời Gian Thực</span>
+                                <span class="badge badge-info">5 Mới</span>
+                            </div>
+                            <div id="notificationsPopoverList" style="max-height: 320px; overflow-y: auto; display: flex; flex-direction: column;">
+                                <!-- Rendered dynamically by JS -->
+                            </div>
+                            <div style="padding: 10px; text-align: center; background: var(--bg-surface-subtle); border-top: 1px solid var(--border-color); font-size: 12px; color: var(--primary); cursor: pointer; font-weight: 600;" onclick="App.showToast('Đã đánh dấu xem tất cả thông báo', 'success'); App.closeNotifications();">
+                                Đánh dấu đã đọc tất cả
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Dynamic Page Content Area -->
+            <div class="app-content" id="mainContentArea">
+                <!-- Initial loading state, dynamically populated by App.init() -->
+                <div style="display: flex; align-items: center; justify-content: center; height: 300px; color: var(--text-tertiary);">
+                    <div style="text-align: center;">
+                        <div style="font-size: 28px; margin-bottom: 8px;">⚡</div>
+                        <div style="font-size: 14px; font-weight: 600;">Đang tải Apero MktPro...</div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Global Search Modal (Ctrl+K) -->
+    <div class="modal-backdrop" id="globalSearchBackdrop" onclick="if(event.target === this) App.closeSearchModal()">
+        <div class="modal-box" style="max-width: 580px;">
+            <div style="padding: 14px 18px; border-bottom: 1px solid var(--border-color); display: flex; align-items: center; gap: 10px;">
+                <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+                <input type="text" id="globalSearchInput" placeholder="Tìm nhanh chiến dịch, creatives, template, tactic, báo cáo..." style="flex: 1; border: none; background: transparent; color: var(--text-primary); font-size: 14px; outline: none;" oninput="App.handleSearch(this.value)">
+                <span class="search-kbd" onclick="App.closeSearchModal()" style="cursor: pointer;">ESC</span>
+            </div>
+            <div class="modal-body" style="padding: 10px 14px; max-height: 380px;" id="searchResultsContainer">
+                <!-- Search results injected dynamically -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notification Container -->
+    <div class="toast-container" id="toastContainer"></div>
+
+    <!-- Core Scripts -->
+    <script src="js/data.js"></script>
+    <script src="js/api.js"></script>
+    <script src="js/charts.js"></script>
+    
+    <!-- Functional Feature Modules -->
+    <script src="js/modules/intraday.js"></script>
+    <script src="js/modules/cutoff.js"></script>
+    <script src="js/modules/cohort.js"></script>
+    <script src="js/modules/channel.js"></script>
+    <script src="js/modules/productMetrics.js"></script>
+    <script src="js/modules/compareVersion.js"></script>
+    <script src="js/modules/templates.js"></script>
+    <script src="js/modules/tactics.js"></script>
+    <script src="js/modules/packages.js"></script>
+    <script src="js/modules/creatives.js"></script>
+    <script src="js/modules/monetization.js"></script>
+    <script src="js/modules/business.js"></script>
+    <script src="js/modules/admin.js"></script>
+    <script src="js/modules/dataManagement.js"></script>
+    <script src="js/modules/realtimeEngine.js"></script>
+
+    <!-- App Entry Point -->
+    <script src="js/app.js"></script>
+    <script>
+        function runInit() {
+            if (window.App && typeof window.App.init === 'function') {
+                window.App.init();
+            }
+        }
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', runInit);
+        } else {
+            runInit();
+        }
+    </script>
+</body>
+</html>

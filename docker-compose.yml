@@ -1,0 +1,21 @@
+services:
+  postgres:
+    image: postgres:17-alpine
+    container_name: apero-mktpro-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: apero
+      POSTGRES_PASSWORD: apero123
+      POSTGRES_DB: apero_mktpro
+    ports:
+      - "5434:5432"
+    volumes:
+      - apero_mktpro_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U apero -d apero_mktpro"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  apero_mktpro_pgdata:

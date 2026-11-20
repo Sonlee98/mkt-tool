@@ -1,0 +1,26 @@
+{
+  "name": "apero-mktpro-backend",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "tsx watch src/server.ts",
+    "start": "tsx src/server.ts",
+    "build": "tsc",
+    "verify": "tsx src/verify.ts",
+    "verify:bulk": "tsx src/verifyBulk.ts"
+  },
+  "dependencies": {
+    "@fastify/cors": "^10.0.1",
+    "@fastify/static": "^8.0.2",
+    "dotenv": "^16.4.7",
+    "fastify": "^5.2.0",
+    "pg": "^8.13.1"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.2",
+    "@types/pg": "^8.11.10",
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.2"
+  }
+}
