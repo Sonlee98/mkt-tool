@@ -13,5 +13,14 @@ export const config = {
     syncWorkerEnabled: process.env.SYNC_WORKER_ENABLED !== 'false',
     exchangeRateVnd: Number(process.env.EXCHANGE_RATE_VND || 25718),
     platformFeeRate: Number(process.env.PLATFORM_FEE_RATE || 0.0155),
-    frontendDir: path.resolve(__dirname, '../../')
+    frontendDir: path.resolve(__dirname, '../../'),
+    maxCampaignDailyBudgetUsd: Math.max(10, Number(process.env.MAX_CAMPAIGN_DAILY_BUDGET_USD || 2000)),
+    maxBatchDailyBudgetUsd: Math.max(10, Number(process.env.MAX_BATCH_DAILY_BUDGET_USD || 10000)),
+    tokenEncryptionKey: (process.env.TOKEN_ENCRYPTION_KEY || 'apero-mktpro-dev-vault-key-change-in-prod').trim(),
+    webhookSecret: (process.env.WEBHOOK_SECRET || '').trim(),
+    adminApiKey: (process.env.ADMIN_API_KEY || '').trim(),
+    googleAdsDeveloperToken: (process.env.GOOGLE_ADS_DEVELOPER_TOKEN || '').trim(),
+    googleOAuthClientId: (process.env.GOOGLE_OAUTH_CLIENT_ID || '').trim(),
+    googleOAuthClientSecret: (process.env.GOOGLE_OAUTH_CLIENT_SECRET || '').trim(),
+    googleOAuthRefreshToken: (process.env.GOOGLE_OAUTH_REFRESH_TOKEN || '').trim()
 };

@@ -8,7 +8,8 @@
     "start": "tsx src/server.ts",
     "build": "tsc",
     "verify": "tsx src/verify.ts",
-    "verify:bulk": "tsx src/verifyBulk.ts"
+    "verify:bulk": "tsx src/verifyBulk.ts",
+    "verify:prod": "tsx src/verifySecurityAndGuardrails.ts"
   },
   "dependencies": {
     "@fastify/cors": "^10.0.1",

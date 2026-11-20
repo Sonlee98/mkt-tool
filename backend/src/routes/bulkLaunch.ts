@@ -97,9 +97,18 @@ export async function bulkLaunchRoutes(app: FastifyInstance): Promise<void> {
             return reply.code(400).send({ ok: false, error: (err as Error).message });
         }
 
+        const options = Object.assign({}, b.options || {});
+        if (plan.summary.exceedsBudgetGuardrail && !Boolean(options.allowHighBudget)) {
+            return reply.code(400).send({
+                ok: false,
+                code: 'BUDGET_GUARDRAIL_BLOCKED',
+                error: plan.summary.guardrailReason || 'Vượt trần ngân sách an toàn mặc định. Vui lòng xác nhận cho phép vượt trần.',
+                summary: plan.summary
+            });
+        }
+
         const batchId = makeId('batch');
         const createdJobs: Array<Record<string, unknown>> = [];
-        const options = Object.assign({}, b.options || {});
 
         const client = await pool.connect();
         try {
@@ -165,6 +174,7 @@ export async function bulkLaunchRoutes(app: FastifyInstance): Promise<void> {
             deduplicated: false,
             batchId,
             status: 'RUNNING',
+            launchPaused: Boolean(options.launchPaused),
             totalJobs: createdJobs.length,
             summary: plan.summary,
             jobs: createdJobs.map(formatJobRow)
@@ -180,6 +190,7 @@ export async function bulkLaunchRoutes(app: FastifyInstance): Promise<void> {
             batches: rows.map(b => ({
                 id: b.id,
                 status: b.status,
+                launchPaused: Boolean((b.options as Record<string, unknown> | null)?.launchPaused),
                 totalJobs: b.total_jobs,
                 succeededJobs: b.succeeded_jobs,
                 failedJobs: b.failed_jobs,
@@ -205,6 +216,7 @@ export async function bulkLaunchRoutes(app: FastifyInstance): Promise<void> {
             batch: {
                 id: batch.id,
                 status: batch.status,
+                launchPaused: Boolean((batch.options as Record<string, unknown> | null)?.launchPaused),
                 totalJobs: batch.total_jobs,
                 succeededJobs: batch.succeeded_jobs,
                 failedJobs: batch.failed_jobs,

@@ -1,7 +1,10 @@
+import { config } from '../config.js';
 import { pool } from '../db/pool.js';
 import { getAppSettings } from '../services/telemetryService.js';
 import { ingestMetricsBatch, type MetricIngestItem } from '../services/ingestService.js';
 import { getNowInTz } from '../utils/time.js';
+import { decryptSecret } from '../utils/cryptoVault.js';
+import { hasAccountLiveCredentials, resolveGoogleBearerToken } from '../utils/googleOAuth.js';
 
 export interface AdAccountRow {
     id: string;
@@ -27,14 +30,15 @@ export interface SyncAccountResult {
 }
 
 async function fetchLivePlatformInsights(acc: AdAccountRow, todayDate: string, exchangeRate: number): Promise<MetricIngestItem[]> {
-    const token = acc.access_token?.trim();
-    if (!token) return [];
-
     const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), 8000);
+    const timer = setTimeout(() => controller.abort(), 10000);
+    const toVnd = (amount: number) =>
+        acc.currency.toUpperCase() === 'USD' ? Math.round(amount * exchangeRate) : Math.round(amount);
 
     try {
         if (acc.channel === 'Facebook') {
+            const token = decryptSecret(acc.access_token);
+            if (!token) return [];
             const url = `https://graph.facebook.com/v20.0/${encodeURIComponent(acc.id)}/insights?level=campaign&fields=campaign_id,campaign_name,spend,actions&date_preset=today&access_token=${encodeURIComponent(token)}`;
             const resp = await fetch(url, { signal: controller.signal });
             if (!resp.ok) {
@@ -42,24 +46,21 @@ async function fetchLivePlatformInsights(acc: AdAccountRow, todayDate: string, e
             }
             const json = await resp.json() as { data?: Array<{ campaign_id?: string; campaign_name?: string; spend?: string; actions?: Array<{ action_type: string; value: string }> }> };
             const rows = json.data || [];
-            return rows.map(r => {
-                const spendUsd = Number(r.spend || 0);
-                const installs = Number(r.actions?.find(a => a.action_type === 'mobile_app_install')?.value || 0);
-                const spendVnd = Math.round(spendUsd * exchangeRate);
-                return {
-                    campaignId: r.campaign_id ? `fb_${r.campaign_id}` : undefined,
-                    externalCampaignId: r.campaign_id,
-                    campaignName: r.campaign_name || `FB_${acc.id}`,
-                    channel: 'Facebook',
-                    date: todayDate,
-                    spendVnd,
-                    revenueVnd: Math.round(spendVnd * 1.04),
-                    installs
-                };
-            });
+            return rows.map(r => ({
+                campaignId: r.campaign_id ? `fb_${r.campaign_id}` : undefined,
+                externalCampaignId: r.campaign_id,
+                campaignName: r.campaign_name || `FB_${acc.id}`,
+                channel: 'Facebook',
+                date: todayDate,
+                spendVnd: toVnd(Number(r.spend || 0)),
+                installs: Math.round(Number(r.actions?.find(a => a.action_type === 'mobile_app_install')?.value || 0)),
+                preserveRevenue: true
+            }));
         }
 
         if (acc.channel === 'TikTok') {
+            const token = decryptSecret(acc.access_token);
+            if (!token) return [];
             const url = `https://business-api.tiktok.com/open_api/v1.3/report/integrated/get/?advertiser_id=${encodeURIComponent(acc.id)}&report_type=BASIC&data_level=AUCTION_CAMPAIGN&dimensions=["campaign_id"]&metrics=["spend","conversion"]&start_date=${todayDate}&end_date=${todayDate}`;
             const resp = await fetch(url, {
                 headers: { 'Access-Token': token },
@@ -70,21 +71,69 @@ async function fetchLivePlatformInsights(acc: AdAccountRow, todayDate: string, e
             }
             const json = await resp.json() as { data?: { list?: Array<{ dimensions?: { campaign_id?: string }; metrics?: { spend?: string; conversion?: string } }> } };
             const list = json.data?.list || [];
-            return list.map(item => {
-                const spendUsd = Number(item.metrics?.spend || 0);
-                const installs = Number(item.metrics?.conversion || 0);
-                const spendVnd = Math.round(spendUsd * exchangeRate);
-                return {
-                    campaignId: item.dimensions?.campaign_id ? `tt_${item.dimensions.campaign_id}` : undefined,
-                    externalCampaignId: item.dimensions?.campaign_id,
-                    campaignName: `TikTok_${item.dimensions?.campaign_id || acc.id}`,
-                    channel: 'TikTok',
-                    date: todayDate,
-                    spendVnd,
-                    revenueVnd: Math.round(spendVnd * 1.05),
-                    installs
-                };
+            return list.map(item => ({
+                campaignId: item.dimensions?.campaign_id ? `tt_${item.dimensions.campaign_id}` : undefined,
+                externalCampaignId: item.dimensions?.campaign_id,
+                campaignName: `TikTok_${item.dimensions?.campaign_id || acc.id}`,
+                channel: 'TikTok',
+                date: todayDate,
+                spendVnd: toVnd(Number(item.metrics?.spend || 0)),
+                installs: Math.round(Number(item.metrics?.conversion || 0)),
+                preserveRevenue: true
+            }));
+        }
+
+        if (acc.channel === 'Google Ads') {
+            const bearerToken = await resolveGoogleBearerToken(acc);
+            const cleanCid = acc.id.replace(/^act_/, '').replace(/-/g, '');
+            const devToken = String(acc.api_config?.developer_token || config.googleAdsDeveloperToken || '').trim();
+            const loginCid = acc.api_config?.login_customer_id
+                ? String(acc.api_config.login_customer_id).replace(/-/g, '').trim()
+                : '';
+
+            const query = `SELECT campaign.id, campaign.name, metrics.cost_micros, metrics.conversions FROM campaign WHERE segments.date = '${todayDate}'`;
+            const resp = await fetch(`https://googleads.googleapis.com/v18/customers/${cleanCid}/googleAds:searchStream`, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${bearerToken}`,
+                    'developer-token': devToken,
+                    ...(loginCid ? { 'login-customer-id': loginCid } : {}),
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ query }),
+                signal: controller.signal
             });
+
+            if (!resp.ok) {
+                throw new Error(`Google Ads GAQL trả mã ${resp.status}`);
+            }
+
+            const chunks = await resp.json() as Array<{
+                results?: Array<{
+                    campaign?: { id?: string; name?: string };
+                    metrics?: { costMicros?: string | number; cost_micros?: string | number; conversions?: string | number };
+                }>;
+            }>;
+
+            const items: MetricIngestItem[] = [];
+            for (const chunk of Array.isArray(chunks) ? chunks : []) {
+                for (const row of chunk.results || []) {
+                    const extId = row.campaign?.id ? String(row.campaign.id) : undefined;
+                    const costMicros = Number(row.metrics?.costMicros ?? row.metrics?.cost_micros ?? 0);
+                    const spendVnd = toVnd(costMicros / 1_000_000);
+                    items.push({
+                        campaignId: extId ? `gg_${extId}` : undefined,
+                        externalCampaignId: extId,
+                        campaignName: row.campaign?.name || `Google_UAC_${extId || acc.id}`,
+                        channel: 'Google Ads',
+                        date: todayDate,
+                        spendVnd,
+                        installs: Math.round(Number(row.metrics?.conversions || 0)),
+                        preserveRevenue: true
+                    });
+                }
+            }
+            return items;
         }
 
         return [];
@@ -110,8 +159,8 @@ export async function syncAdAccountById(accountId: string, overrideSource?: stri
 
     const sourceLabel = overrideSource || `${acc.channel} API (${acc.name})`;
 
-    // Live API adapter path when real access_token is configured
-    if (acc.access_token && acc.access_token.trim().length > 0) {
+    // Live API adapter path when real credentials are configured
+    if (hasAccountLiveCredentials(acc)) {
         const liveItems = await fetchLivePlatformInsights(acc, tzNow.date, settings.exchangeRateVnd);
         const res = await ingestMetricsBatch(liveItems, `${sourceLabel} [LIVE API]`);
         await pool.query(`UPDATE ad_accounts SET last_sync_at = NOW() WHERE id = $1`, [acc.id]);
@@ -123,7 +172,7 @@ export async function syncAdAccountById(accountId: string, overrideSource?: stri
             spendDeltaTotal: res.spendDeltaTotal,
             revDeltaTotal: res.revDeltaTotal,
             installsDeltaTotal: res.installsDeltaTotal,
-            apiNote: 'Đã kéo dữ liệu trực tiếp qua Access Token'
+            apiNote: 'Đã kéo Spend trực tiếp (giữ nguyên doanh thu từ MMP Webhook)'
         };
     }
 

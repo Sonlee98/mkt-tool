@@ -15,6 +15,7 @@ import { bulkLaunchRoutes } from './routes/bulkLaunch.js';
 import { syncWorker } from './workers/syncWorker.js';
 import { bulkLaunchWorker } from './workers/bulkLaunchWorker.js';
 import { ensureUploadDirs, UPLOADS_ROOT_DIR } from './services/mediaProcessor.js';
+import { verifySecretConstantTime } from './utils/cryptoVault.js';
 
 async function main() {
     await ensureDatabaseReady();
@@ -36,13 +37,39 @@ async function main() {
         methods: ['GET', 'POST', 'PATCH', 'PUT', 'DELETE', 'OPTIONS']
     });
 
+    // Optional Admin API Key guard (protects admin/write endpoints when ADMIN_API_KEY is set in .env)
+    app.addHook('onRequest', async (req, reply) => {
+        if (!config.adminApiKey) return;
+        const url = req.url.split('?')[0];
+        if (!url.startsWith('/api/v1/')) return;
+        if (url.startsWith('/api/v1/webhooks/')) return;
+
+        const isProtectedRead = url === '/api/v1/ad-accounts' || url === '/api/v1/admin/security';
+        const isMutation = ['POST', 'PUT', 'PATCH', 'DELETE'].includes(req.method.toUpperCase());
+        if (!isProtectedRead && !isMutation) return;
+
+        const provided = typeof req.headers['x-admin-key'] === 'string' ? req.headers['x-admin-key'].trim() : '';
+        if (!verifySecretConstantTime(provided, config.adminApiKey)) {
+            return reply.code(401).send({
+                ok: false,
+                error: 'Unauthorized: Thiếu hoặc sai x-admin-key.'
+            });
+        }
+    });
+
     app.get('/api/v1/health', async () => {
         await pool.query('SELECT 1');
         return {
             ok: true,
             db: 'connected',
             timezone: config.timezone,
-            worker: syncWorker.getStatus()
+            worker: syncWorker.getStatus(),
+            security: {
+                tokenEncryption: 'AES-256-GCM',
+                adminKeyRequired: Boolean(config.adminApiKey),
+                maxCampaignDailyBudgetUsd: config.maxCampaignDailyBudgetUsd,
+                maxBatchDailyBudgetUsd: config.maxBatchDailyBudgetUsd
+            }
         };
     });
 

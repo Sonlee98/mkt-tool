@@ -6,17 +6,19 @@ export interface AppSettings {
     exchangeRateVnd: number;
     platformFeeRate: number;
     ggsheetCsvUrl: string;
+    webhookSecret: string;
 }
 
 export async function getAppSettings(): Promise<AppSettings> {
     const { rows } = await pool.query<{ key: string; value: string }>(
-        `SELECT key, value FROM system_settings WHERE key IN ('exchange_rate_vnd', 'platform_fee_rate', 'ggsheet_csv_url')`
+        `SELECT key, value FROM system_settings WHERE key IN ('exchange_rate_vnd', 'platform_fee_rate', 'ggsheet_csv_url', 'webhook_secret')`
     );
     const map = new Map(rows.map(r => [r.key, r.value]));
     return {
         exchangeRateVnd: Number(map.get('exchange_rate_vnd')) || config.exchangeRateVnd,
         platformFeeRate: Number(map.get('platform_fee_rate')) || config.platformFeeRate,
-        ggsheetCsvUrl: map.get('ggsheet_csv_url') || ''
+        ggsheetCsvUrl: map.get('ggsheet_csv_url') || '',
+        webhookSecret: map.get('webhook_secret') || ''
     };
 }
 

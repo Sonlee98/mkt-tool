@@ -6,6 +6,7 @@
 const AdminModule = {
     accountsCache: null,
     logsCache: null,
+    securityCache: null,
 
     render() {
         const admin = window.APERO_DATA.administration;
@@ -13,6 +14,7 @@ const AdminModule = {
             id: a.id,
             name: a.name,
             channel: a.channel,
+            currency: 'USD',
             spendToday: a.spendToday,
             balance: a.balance,
             status: a.status,
@@ -28,13 +30,18 @@ const AdminModule = {
             <div class="page-title-bar">
                 <div class="page-heading">
                     <h1>Administration & Integrations</h1>
-                    <p>Quản lý kết nối API tài khoản quảng cáo (Meta, TikTok, Google Ads, Mintegral), Access Token và nhật ký đồng bộ</p>
+                    <p>Quản lý kết nối API tài khoản quảng cáo (Meta, TikTok, Google Ads, Mintegral), bảo mật Token AES-256-GCM và cầu chì an toàn</p>
                 </div>
                 <div class="page-actions">
                     <button class="btn btn-primary btn-sm" onclick="AdminModule.openAccountModal()">
                         + Kết Nối Ad Account
                     </button>
                 </div>
+            </div>
+
+            <!-- Security & Guardrails Status Bar -->
+            <div class="data-table-container" style="padding: 14px 18px; margin-bottom: 16px;" id="adminSecurityCard">
+                ${this.renderSecurityCard(this.securityCache)}
             </div>
 
             <!-- Ad Account Integrations -->
@@ -125,21 +132,21 @@ const AdminModule = {
 
             <!-- Connect / Update Ad Account Modal -->
             <div class="modal-backdrop" id="adAccountModalBackdrop" onclick="if(event.target === this) AdminModule.closeAccountModal()">
-                <div class="modal-box" style="max-width: 560px;">
+                <div class="modal-box" style="max-width: 640px;">
                     <div class="modal-header">
                         <div class="modal-title" id="adAccountModalTitle">Kết Nối / Cấu Hình Ad Account API</div>
                         <button class="modal-close-btn" onclick="AdminModule.closeAccountModal()">✕</button>
                     </div>
                     <form onsubmit="event.preventDefault(); AdminModule.saveAdAccount();">
-                        <div class="modal-body">
+                        <div class="modal-body" style="max-height: 70vh; overflow-y: auto;">
                             <div class="form-row-2">
                                 <div class="form-group">
                                     <label class="form-label required">Account ID</label>
-                                    <input type="text" class="form-input" id="accIdInput" required placeholder="e.g. act_102938499">
+                                    <input type="text" class="form-input" id="accIdInput" required placeholder="e.g. act_102938499 hoặc 8291048201">
                                 </div>
                                 <div class="form-group">
                                     <label class="form-label required">Kênh Quảng Cáo</label>
-                                    <select class="form-select" id="accChannelInput">
+                                    <select class="form-select" id="accChannelInput" onchange="AdminModule.toggleChannelFields()">
                                         <option value="Facebook">Facebook</option>
                                         <option value="TikTok">TikTok</option>
                                         <option value="Google Ads">Google Ads</option>
@@ -153,26 +160,102 @@ const AdminModule = {
                                     <input type="text" class="form-input" id="accNameInput" required placeholder="e.g. BM_Apero_Europe_01">
                                 </div>
                                 <div class="form-group">
-                                    <label class="form-label">Số Dư (USD)</label>
-                                    <input type="number" class="form-input" id="accBalanceInput" value="15000">
+                                    <label class="form-label">Tiền tệ & Số dư (USD)</label>
+                                    <div style="display:flex; gap:8px;">
+                                        <select class="form-select" id="accCurrencyInput" style="width:96px;">
+                                            <option value="USD">USD</option>
+                                            <option value="VND">VND</option>
+                                        </select>
+                                        <input type="number" class="form-input" id="accBalanceInput" value="15000" style="flex:1;">
+                                    </div>
                                 </div>
                             </div>
                             <div class="form-group">
-                                <label class="form-label">Access Token (Tuỳ chọn - để trống nếu dùng Server Sandbox)</label>
-                                <input type="password" class="form-input" id="accTokenInput" placeholder="Dán Meta/TikTok/Google Access Token thật tại đây...">
+                                <label class="form-label">Access Token (Tự động mã hóa AES-256-GCM khi lưu)</label>
+                                <input type="password" class="form-input" id="accTokenInput" placeholder="Dán Meta/TikTok/Google Access Token (để trống nếu giữ token cũ hoặc chạy Sandbox)...">
                                 <span style="font-size: 11px; color: var(--text-tertiary);">
-                                    Khi có Token, Adapter Backend sẽ tự động gọi API thật của nền tảng quảng cáo tương ứng.
+                                    Khi có Token hợp lệ, Adapter Backend sẽ tự động gọi API thật của nền tảng quảng cáo tương ứng.
                                 </span>
+                            </div>
+
+                            <!-- Google Ads OAuth2 & UAC Extra Config -->
+                            <div id="accGoogleFieldsGroup" style="display:none; padding:12px; border:1px solid var(--border-color); border-radius:var(--radius-md); background:var(--bg-surface-subtle); margin-top:8px;">
+                                <div style="font-weight:700; font-size:12.5px; margin-bottom:8px; color:var(--primary);">Cấu hình Google Ads OAuth2 Auto-Refresh & UAC (API v18)</div>
+                                <div class="form-row-2">
+                                    <div class="form-group">
+                                        <label class="form-label">MCC Login Customer ID (10 số)</label>
+                                        <input type="text" class="form-input" id="accGgLoginCidInput" placeholder="1234567890">
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="form-label">YouTube Unlisted Channel ID</label>
+                                        <input type="text" class="form-input" id="accGgYoutubeIdInput" placeholder="UCxxxxxxxxxxxxxx">
+                                    </div>
+                                </div>
+                                <div class="form-row-2">
+                                    <div class="form-group">
+                                        <label class="form-label">Developer Token</label>
+                                        <input type="password" class="form-input" id="accGgDevTokenInput" placeholder="Để trống nếu dùng từ .env hoặc giữ cũ">
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="form-label">OAuth2 Client ID</label>
+                                        <input type="text" class="form-input" id="accGgClientIdInput" placeholder="xxxx.apps.googleusercontent.com">
+                                    </div>
+                                </div>
+                                <div class="form-row-2">
+                                    <div class="form-group">
+                                        <label class="form-label">OAuth2 Client Secret (AES-256)</label>
+                                        <input type="password" class="form-input" id="accGgClientSecretInput" placeholder="GOCSPX-...">
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="form-label">OAuth2 Refresh Token (AES-256)</label>
+                                        <input type="password" class="form-input" id="accGgRefreshTokenInput" placeholder="1//0g...">
+                                    </div>
+                                </div>
                             </div>
                         </div>
                         <div class="modal-footer">
                             <button type="button" class="btn btn-outline btn-sm" onclick="AdminModule.closeAccountModal()">Hủy</button>
-                            <button type="submit" class="btn btn-primary btn-sm">✓ Lưu Kết Nối</button>
+                            <button type="submit" class="btn btn-primary btn-sm">✓ Lưu & Mã Hóa Token</button>
                         </div>
                     </form>
                 </div>
             </div>
         `;
+    },
+
+    renderSecurityCard(sec) {
+        const s = sec || {
+            tokenEncryption: 'AES-256-GCM',
+            adminKeyRequired: false,
+            webhookSecretConfigured: false,
+            maxCampaignDailyBudgetUsd: 2000,
+            maxBatchDailyBudgetUsd: 10000
+        };
+        const currentAdminKey = typeof localStorage !== 'undefined' ? (localStorage.getItem('apero_admin_key') || '') : '';
+        return `
+            <div style="display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:12px;">
+                <div style="display:flex; flex-wrap:wrap; align-items:center; gap:10px; font-size:12px;">
+                    <span class="badge badge-success">🔒 Vault: ${this.escapeHtml(s.tokenEncryption)}</span>
+                    <span class="badge badge-info">🛡️ Budget Cap: $${Number(s.maxCampaignDailyBudgetUsd).toLocaleString()}/camp · $${Number(s.maxBatchDailyBudgetUsd).toLocaleString()}/batch</span>
+                    <span class="badge ${s.webhookSecretConfigured ? 'badge-success' : 'badge-warning'}">
+                        🔑 Webhook Auth: ${s.webhookSecretConfigured ? `Active (${this.escapeHtml(s.webhookSecretPreview || 'configured')})` : 'Chưa đặt SECRET'}
+                    </span>
+                    ${s.adminKeyRequired ? `<span class="badge badge-warning">🔐 Admin Key Bắt Buộc</span>` : `<span class="badge badge-neutral">Local Dev Admin Mode</span>`}
+                </div>
+                <div style="display:flex; flex-wrap:wrap; align-items:center; gap:8px;">
+                    <input type="password" class="form-input" id="adminWebhookSecretInput" placeholder="Đặt WEBHOOK_SECRET..." style="width:170px; height:30px; font-size:12px;">
+                    <button class="btn btn-outline btn-sm" onclick="AdminModule.saveWebhookSecret()">Lưu Webhook Secret</button>
+                    <input type="password" class="form-input" id="adminSessionKeyInput" value="${this.escapeHtml(currentAdminKey)}" placeholder="x-admin-key (nếu bật)" style="width:150px; height:30px; font-size:12px;">
+                    <button class="btn btn-outline btn-sm" onclick="AdminModule.saveSessionAdminKey()">Gắn Session Key</button>
+                </div>
+            </div>
+        `;
+    },
+
+    toggleChannelFields() {
+        const ch = document.getElementById('accChannelInput')?.value;
+        const ggBox = document.getElementById('accGoogleFieldsGroup');
+        if (ggBox) ggBox.style.display = ch === 'Google Ads' ? 'block' : 'none';
     },
 
     renderAccountRows(accounts) {
@@ -219,10 +302,16 @@ const AdminModule = {
     async loadData() {
         if (!window.AperoApi) return;
         try {
-            const [accRes, telRes] = await Promise.all([
+            const [accRes, telRes, secRes] = await Promise.all([
                 window.AperoApi.getAdAccounts(),
-                window.AperoApi.getTelemetry(15)
+                window.AperoApi.getTelemetry(15),
+                window.AperoApi.getSecurityConfig().catch(() => null)
             ]);
+            if (secRes && secRes.ok) {
+                this.securityCache = secRes;
+                const secEl = document.getElementById('adminSecurityCard');
+                if (secEl) secEl.innerHTML = this.renderSecurityCard(this.securityCache);
+            }
             if (accRes && accRes.accounts) {
                 this.accountsCache = accRes.accounts;
                 const body = document.getElementById('adminAdAccountsBody');
@@ -238,6 +327,24 @@ const AdminModule = {
         } catch {
             // Keep static fallback silently if backend offline
         }
+    },
+
+    async saveWebhookSecret() {
+        const val = document.getElementById('adminWebhookSecretInput')?.value.trim() || '';
+        try {
+            await window.AperoApi.saveSecurityConfig({ webhookSecret: val });
+            App.showToast(val ? '🔒 Đã cập nhật WEBHOOK_SECRET xác thực MMP!' : 'Đã tắt WEBHOOK_SECRET runtime.', 'success');
+            await this.loadData();
+        } catch (err) {
+            App.showToast(`Lỗi lưu Webhook Secret: ${err.message}`, 'danger');
+        }
+    },
+
+    async saveSessionAdminKey() {
+        const key = document.getElementById('adminSessionKeyInput')?.value.trim() || '';
+        window.AperoApi.setAdminKey(key);
+        App.showToast(key ? '🔐 Đã gắn x-admin-key cho phiên làm việc!' : 'Đã xóa x-admin-key khỏi trình duyệt.', 'info');
+        await this.loadData();
     },
 
     async syncAccount(accountId) {
@@ -260,21 +367,44 @@ const AdminModule = {
         const idEl = document.getElementById('accIdInput');
         const chEl = document.getElementById('accChannelInput');
         const nameEl = document.getElementById('accNameInput');
+        const curEl = document.getElementById('accCurrencyInput');
         const balEl = document.getElementById('accBalanceInput');
         const tokEl = document.getElementById('accTokenInput');
+        const ggLoginEl = document.getElementById('accGgLoginCidInput');
+        const ggYtEl = document.getElementById('accGgYoutubeIdInput');
+        const ggDevEl = document.getElementById('accGgDevTokenInput');
+        const ggCidEl = document.getElementById('accGgClientIdInput');
+        const ggSecEl = document.getElementById('accGgClientSecretInput');
+        const ggRefEl = document.getElementById('accGgRefreshTokenInput');
 
         if (existingAcc) {
+            const cfg = existingAcc.apiConfig || {};
             if (idEl) idEl.value = existingAcc.id;
             if (chEl) chEl.value = existingAcc.channel;
             if (nameEl) nameEl.value = existingAcc.name;
+            if (curEl) curEl.value = existingAcc.currency || 'USD';
             if (balEl) balEl.value = existingAcc.balanceUsd || 10000;
             if (tokEl) tokEl.value = '';
+            if (ggLoginEl) ggLoginEl.value = cfg.login_customer_id || '';
+            if (ggYtEl) ggYtEl.value = cfg.youtube_channel_id || '';
+            if (ggDevEl) ggDevEl.value = '';
+            if (ggCidEl) ggCidEl.value = cfg.client_id || '';
+            if (ggSecEl) ggSecEl.value = '';
+            if (ggRefEl) ggRefEl.value = '';
         } else {
             if (idEl) idEl.value = '';
             if (nameEl) nameEl.value = '';
+            if (curEl) curEl.value = 'USD';
             if (balEl) balEl.value = '15000';
             if (tokEl) tokEl.value = '';
+            if (ggLoginEl) ggLoginEl.value = '';
+            if (ggYtEl) ggYtEl.value = '';
+            if (ggDevEl) ggDevEl.value = '';
+            if (ggCidEl) ggCidEl.value = '';
+            if (ggSecEl) ggSecEl.value = '';
+            if (ggRefEl) ggRefEl.value = '';
         }
+        this.toggleChannelFields();
         modal.classList.add('open');
     },
 
@@ -289,18 +419,37 @@ const AdminModule = {
     },
 
     async saveAdAccount() {
+        const channel = document.getElementById('accChannelInput').value;
+        const apiConfig = {};
+        if (channel === 'Google Ads') {
+            const loginCid = document.getElementById('accGgLoginCidInput')?.value.trim();
+            const ytId = document.getElementById('accGgYoutubeIdInput')?.value.trim();
+            const devTok = document.getElementById('accGgDevTokenInput')?.value.trim();
+            const clientId = document.getElementById('accGgClientIdInput')?.value.trim();
+            const clientSec = document.getElementById('accGgClientSecretInput')?.value.trim();
+            const refreshTok = document.getElementById('accGgRefreshTokenInput')?.value.trim();
+            if (loginCid) apiConfig.login_customer_id = loginCid;
+            if (ytId) apiConfig.youtube_channel_id = ytId;
+            if (devTok) apiConfig.developer_token = devTok;
+            if (clientId) apiConfig.client_id = clientId;
+            if (clientSec) apiConfig.client_secret = clientSec;
+            if (refreshTok) apiConfig.refresh_token = refreshTok;
+        }
+
         const payload = {
             id: document.getElementById('accIdInput').value.trim(),
-            channel: document.getElementById('accChannelInput').value,
+            channel,
             name: document.getElementById('accNameInput').value.trim(),
+            currency: document.getElementById('accCurrencyInput')?.value || 'USD',
             balanceUsd: parseFloat(document.getElementById('accBalanceInput').value || 0),
-            accessToken: document.getElementById('accTokenInput').value.trim()
+            accessToken: document.getElementById('accTokenInput').value.trim(),
+            apiConfig
         };
 
         try {
             await window.AperoApi.saveAdAccount(payload);
             this.closeAccountModal();
-            App.showToast(`Đã lưu cấu hình tài khoản ${payload.name}!`, 'success');
+            App.showToast(`🔒 Đã lưu & mã hóa cấu hình tài khoản ${payload.name}!`, 'success');
             await this.loadData();
         } catch (err) {
             App.showToast(`Lỗi lưu Ad Account: ${err.message}`, 'danger');

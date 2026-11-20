@@ -1,10 +1,12 @@
 import type { FastifyInstance } from 'fastify';
+import { pool } from '../db/pool.js';
 import {
     buildIntradayCsv,
     getIntradayReport,
     updateCampaignStatus,
     type IntradayFilterParams
 } from '../services/intradayService.js';
+import { setPlatformCampaignStatus, type LaunchAccountInfo } from '../adapters/bulkLaunchAdapters.js';
 import { recordTelemetry } from '../services/telemetryService.js';
 import { sseHub } from '../services/sseHub.js';
 
@@ -35,17 +37,53 @@ export async function intradayRoutes(app: FastifyInstance): Promise<void> {
             if (nextStatus !== 'ON' && nextStatus !== 'OFF') {
                 return reply.code(400).send({ ok: false, error: 'Status phải là ON hoặc OFF' });
             }
+
+            const { rows: cmpRows } = await pool.query<{
+                id: string;
+                external_campaign_id: string;
+                ad_account_id: string | null;
+                channel: string;
+                name: string;
+            }>(
+                `SELECT id, external_campaign_id, ad_account_id, channel, name FROM campaigns WHERE id = $1`,
+                [req.params.id]
+            );
+            const existing = cmpRows[0];
+            if (!existing) {
+                return reply.code(404).send({ ok: false, error: 'Không tìm thấy chiến dịch' });
+            }
+
+            let syncedLive = false;
+            if (existing.ad_account_id) {
+                const { rows: accRows } = await pool.query<LaunchAccountInfo>(
+                    `SELECT id, name, channel, currency, access_token, api_config FROM ad_accounts WHERE id = $1`,
+                    [existing.ad_account_id]
+                );
+                const acc = accRows[0];
+                if (acc) {
+                    try {
+                        const res = await setPlatformCampaignStatus(acc, existing.channel, existing.external_campaign_id, nextStatus);
+                        syncedLive = res.syncedLive;
+                    } catch (err) {
+                        return reply.code(502).send({
+                            ok: false,
+                            error: `Lỗi đồng bộ trạng thái lên ${existing.channel} Live API: ${(err as Error).message}`
+                        });
+                    }
+                }
+            }
+
             const updated = await updateCampaignStatus(req.params.id, nextStatus);
             if (!updated) {
                 return reply.code(404).send({ ok: false, error: 'Không tìm thấy chiến dịch' });
             }
 
             const telemetry = await recordTelemetry({
-                source: 'Campaign Control API',
+                source: syncedLive ? `Campaign Control (${existing.channel} LIVE)` : 'Campaign Control API',
                 statusCode: 200,
                 latencyMs: 12,
-                message: `Chuyển trạng thái chiến dịch "${updated.name}" sang ${updated.status}`,
-                payloadSummary: { campaignId: updated.id, status: updated.status }
+                message: `Chuyển trạng thái chiến dịch "${updated.name}" sang ${updated.status}${syncedLive ? ' (đã đồng bộ Live API)' : ''}`,
+                payloadSummary: { campaignId: updated.id, status: updated.status, syncedLive }
             });
 
             sseHub.broadcast('intraday_sync', {
@@ -58,7 +96,7 @@ export async function intradayRoutes(app: FastifyInstance): Promise<void> {
                 telemetry
             });
 
-            return { ok: true, campaign: updated };
+            return { ok: true, syncedLive, campaign: updated };
         }
     );
 }

@@ -626,7 +626,20 @@ const CreativesModule = {
             return;
         }
 
+        const prev = this.state.previewResult;
+        const launchPaused = Boolean(document.getElementById('chkLaunchPaused')?.checked);
+        const allowHighBudget = Boolean(document.getElementById('chkAllowHighBudget')?.checked);
+        if (prev?.summary?.exceedsBudgetGuardrail && !allowHighBudget) {
+            App.showToast('Ngân sách vượt trần an toàn! Vui lòng tích xác nhận cho phép vượt trần.', 'warning');
+            return;
+        }
+
         const simFail = Boolean(document.getElementById('chkSimulateFailOnce')?.checked);
+        const options = {};
+        if (simFail) options.simulateFailOnce = true;
+        if (launchPaused) options.launchPaused = true;
+        if (allowHighBudget) options.allowHighBudget = true;
+
         const idemKey = `ui_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
 
         try {
@@ -634,12 +647,13 @@ const CreativesModule = {
                 creativeIds: this.state.selectedIds,
                 packageIds: this.state.selectedPackageIds,
                 createdBy: 'HoangNC',
-                options: simFail ? { simulateFailOnce: true } : {}
+                options
             }, idemKey);
 
             this.state.activeBatch = {
                 id: res.batchId,
                 status: res.status,
+                launchPaused: Boolean(res.launchPaused),
                 totalJobs: res.totalJobs,
                 succeededJobs: 0,
                 failedJobs: 0
@@ -647,7 +661,12 @@ const CreativesModule = {
             this.state.activeBatchJobs = res.jobs || [];
             this.state.launchModalTab = 'monitor';
             this.refreshLaunchModalBody();
-            App.showToast(`🚀 Đã đẩy ${res.totalJobs} Campaign Jobs vào hàng đợi SQL!`, 'success');
+            App.showToast(
+                launchPaused
+                    ? `🛡️ Đã đẩy ${res.totalJobs} Campaign Jobs (giữ trạng thái PAUSED an toàn)!`
+                    : `🚀 Đã đẩy ${res.totalJobs} Campaign Jobs vào hàng đợi SQL!`,
+                'success'
+            );
         } catch (err) {
             App.showToast(`Lỗi khởi chạy: ${err.message}`, 'danger');
         }
@@ -759,6 +778,7 @@ const CreativesModule = {
                         <div>
                             <strong style="font-size:13.5px;">Batch <code>${this.escapeHtml(b.id)}</code></strong>
                             <span class="badge ${b.status === 'COMPLETED' ? 'badge-success' : b.status === 'RUNNING' ? 'badge-info' : 'badge-warning'}" style="margin-left:8px;">${this.escapeHtml(b.status)}</span>
+                            ${b.launchPaused ? `<span class="badge badge-warning" style="margin-left:6px;">🛡️ PAUSED GUARDRAIL</span>` : ''}
                         </div>
                         <div style="font-size:12.5px;">
                             <strong style="color:#10b981;">${b.succeededJobs || 0} Thành công</strong> ·
@@ -825,12 +845,15 @@ const CreativesModule = {
         // Default: Dry-Run Preview Tab
         const pkgs = this.state.packagesCache || [];
         const prev = this.state.previewResult;
+        const hasLivePackage = pkgs
+            .filter(p => this.state.selectedPackageIds.includes(p.id))
+            .some(p => Boolean(p.hasToken));
 
         return `
             <div style="display:grid; grid-template-columns: 1.1fr 1fr; gap:16px;">
                 <div>
                     <div style="font-size:12.5px; font-weight:700; margin-bottom:8px;">1. Chọn Gói Package Áp Dụng (${this.state.selectedIds.length} Creatives đã chọn):</div>
-                    <div style="display:flex; flex-direction:column; gap:8px; max-height:280px; overflow-y:auto;">
+                    <div style="display:flex; flex-direction:column; gap:8px; max-height:260px; overflow-y:auto;">
                         ${pkgs.map(p => {
                             const checked = this.state.selectedPackageIds.includes(p.id);
                             return `
@@ -848,10 +871,16 @@ const CreativesModule = {
                         }).join('') || `<div style="color:var(--text-tertiary); font-size:12px;">Đang tải danh sách Package...</div>`}
                     </div>
 
-                    <label style="margin-top:12px; display:flex; align-items:center; gap:8px; font-size:12px; color:var(--text-secondary); cursor:pointer;">
-                        <input type="checkbox" id="chkSimulateFailOnce">
-                        Giả lập 1 Job lỗi tạm thời để test cơ chế Checkpoint Resume & Retry
-                    </label>
+                    <div style="margin-top:12px; padding:10px; border:1px solid var(--border-color); border-radius:var(--radius-md); background:var(--bg-surface-subtle); display:flex; flex-direction:column; gap:8px;">
+                        <label style="display:flex; align-items:flex-start; gap:8px; font-size:12px; color:var(--text-primary); cursor:pointer;">
+                            <input type="checkbox" id="chkLaunchPaused" ${hasLivePackage ? 'checked' : ''} style="margin-top:2px;">
+                            <span><strong>🛡️ Chế độ an toàn: Giữ trạng thái PAUSED sau khi tạo xong</strong><br><span style="color:var(--text-tertiary); font-size:11px;">Tạo đủ Campaign/AdGroup/Ad nhưng chưa cắn tiền thật để Marketer kiểm tra lại trên Ads Manager.</span></span>
+                        </label>
+                        <label style="display:flex; align-items:center; gap:8px; font-size:12px; color:var(--text-secondary); cursor:pointer;">
+                            <input type="checkbox" id="chkSimulateFailOnce">
+                            Giả lập 1 Job lỗi tạm thời để test cơ chế Checkpoint Resume & Retry
+                        </label>
+                    </div>
                 </div>
 
                 <div>
@@ -865,10 +894,21 @@ const CreativesModule = {
                             </div>
                             <div class="stat-card" style="padding:10px;">
                                 <div class="stat-card-title">Ngân Sách Ngày Dự Kiến</div>
-                                <div class="stat-card-value" style="font-size:18px; color:#10b981;">$${prev.summary.estimatedDailyBudgetUsd.toLocaleString('en-US')}</div>
+                                <div class="stat-card-value" style="font-size:18px; color:${prev.summary.exceedsBudgetGuardrail ? '#ef4444' : '#10b981'};">$${prev.summary.estimatedDailyBudgetUsd.toLocaleString('en-US')}</div>
                                 <div style="font-size:11px; color:var(--text-tertiary);">${prev.summary.estimatedDailyBudgetVnd.toLocaleString('en-US')} ₫</div>
                             </div>
                         </div>
+
+                        ${prev.summary.exceedsBudgetGuardrail ? `
+                            <div style="background:rgba(239,68,68,0.1); border:1px solid #ef4444; color:#fca5a5; border-radius:var(--radius-md); padding:10px; font-size:12px; margin-bottom:10px;">
+                                <div style="font-weight:700; color:#ef4444; margin-bottom:4px;">🛡️ Chặn Vượt Trần Ngân Sách An Toàn</div>
+                                <div style="color:var(--text-primary); margin-bottom:8px;">${this.escapeHtml(prev.summary.guardrailReason || '')}</div>
+                                <label style="display:flex; align-items:center; gap:8px; font-weight:600; color:var(--text-primary); cursor:pointer;">
+                                    <input type="checkbox" id="chkAllowHighBudget">
+                                    Tôi xác nhận muốn vượt trần ngân sách mặc định ($${prev.summary.maxCampaignDailyBudgetUsd}/camp · $${prev.summary.maxBatchDailyBudgetUsd}/batch)
+                                </label>
+                            </div>
+                        ` : ''}
 
                         <div style="background:var(--bg-surface-subtle); border:1px solid var(--border-color); border-radius:var(--radius-md); padding:10px; font-size:12px; margin-bottom:10px;">
                             <div>• <strong>SHA-256 Media Cache Hit:</strong> <span style="color:#10b981; font-weight:700;">${prev.summary.mediaCacheHitCount}</span> | Upload mới: <strong>${prev.summary.mediaUploadNeededCount}</strong></div>

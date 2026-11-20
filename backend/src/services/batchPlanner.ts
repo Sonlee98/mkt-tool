@@ -1,6 +1,8 @@
 import crypto from 'node:crypto';
+import { config } from '../config.js';
 import { pool } from '../db/pool.js';
 import { getAppSettings } from './telemetryService.js';
+import { hasAccountLiveCredentials } from '../utils/googleOAuth.js';
 import { getNowInTz } from '../utils/time.js';
 
 export type BulkChannel = 'Facebook' | 'Google Ads';
@@ -188,6 +190,10 @@ export interface BulkLaunchPlan {
         mediaUploadNeededCount: number;
         estimatedYoutubeQuotaUnits: number;
         exchangeRateVnd: number;
+        maxCampaignDailyBudgetUsd: number;
+        maxBatchDailyBudgetUsd: number;
+        exceedsBudgetGuardrail: boolean;
+        guardrailReason: string | null;
     };
     warnings: Array<{ code: string; creativeId?: string; message: string }>;
     planPreview: Array<{
@@ -370,6 +376,7 @@ export async function buildBulkLaunchPlan(creativeIds: string[], packageIds: str
     let estimatedDailyBudgetVnd = 0;
     let mediaCacheHitCount = 0;
     let mediaUploadNeededCount = 0;
+    const perCampaignExceedsList: string[] = [];
 
     for (const pkg of pkgRows) {
         const ch = normalizeBulkChannel(pkg.channel);
@@ -383,8 +390,16 @@ export async function buildBulkLaunchPlan(creativeIds: string[], packageIds: str
             ? Math.round(Number(pkg.budget_amount) * settings.exchangeRateVnd)
             : Math.round(Number(pkg.budget_amount));
         const dailyBudgetUsd = Number((dailyBudgetVnd / settings.exchangeRateVnd).toFixed(2));
+        if (dailyBudgetUsd > config.maxCampaignDailyBudgetUsd) {
+            perCampaignExceedsList.push(`${pkg.package_name} ($${dailyBudgetUsd.toLocaleString('en-US')}/camp > $${config.maxCampaignDailyBudgetUsd.toLocaleString('en-US')})`);
+        }
         const executionMode: 'live_api' | 'server_sandbox' =
-            Boolean(pkg.access_token && pkg.access_token.trim().length > 0 && !pkg.api_config?.sandboxOverride)
+            hasAccountLiveCredentials({
+                id: pkg.ad_account_id,
+                channel: ch,
+                access_token: pkg.access_token,
+                api_config: pkg.api_config
+            })
                 ? 'live_api'
                 : 'server_sandbox';
 
@@ -491,6 +506,18 @@ export async function buildBulkLaunchPlan(creativeIds: string[], packageIds: str
 
     const estimatedDailyBudgetUsd = Number((estimatedDailyBudgetVnd / settings.exchangeRateVnd).toFixed(2));
     const estimatedYoutubeQuotaUnits = hasGoogle ? uniqueYoutubeUploadsNeeded.size * 1600 : 0;
+    const exceedsBatchCap = estimatedDailyBudgetUsd > config.maxBatchDailyBudgetUsd;
+    const exceedsCampaignCap = perCampaignExceedsList.length > 0;
+    const exceedsBudgetGuardrail = exceedsBatchCap || exceedsCampaignCap;
+
+    const guardrailReasons: string[] = [];
+    if (exceedsCampaignCap) {
+        guardrailReasons.push(`Ngân sách từng camp vượt trần $${config.maxCampaignDailyBudgetUsd.toLocaleString('en-US')}/ngày: ${perCampaignExceedsList.join('; ')}`);
+    }
+    if (exceedsBatchCap) {
+        guardrailReasons.push(`Tổng ngân sách batch ($${estimatedDailyBudgetUsd.toLocaleString('en-US')}/ngày) vượt trần an toàn $${config.maxBatchDailyBudgetUsd.toLocaleString('en-US')}/ngày.`);
+    }
+    const guardrailReason = guardrailReasons.length > 0 ? guardrailReasons.join(' | ') : null;
 
     if (estimatedYoutubeQuotaUnits > 8000) {
         warnings.push({
@@ -498,7 +525,12 @@ export async function buildBulkLaunchPlan(creativeIds: string[], packageIds: str
             message: `Google UAC cần upload ${uniqueYoutubeUploadsNeeded.size} video mới lên YouTube Unlisted (~${estimatedYoutubeQuotaUnits.toLocaleString('en-US')} / 10,000 quota units/ngày mặc định).`
         });
     }
-    if (estimatedDailyBudgetUsd >= 5000) {
+    if (exceedsBudgetGuardrail && guardrailReason) {
+        warnings.push({
+            code: 'BUDGET_GUARDRAIL_EXCEEDED',
+            message: `🛡️ CẢNH BÁO TRẦN NGÂN SÁCH: ${guardrailReason}`
+        });
+    } else if (estimatedDailyBudgetUsd >= 1500) {
         warnings.push({
             code: 'HIGH_BUDGET_WARNING',
             message: `Tổng ngân sách ngày dự kiến khá cao ($${estimatedDailyBudgetUsd.toLocaleString('en-US')}/ngày). Hãy kiểm tra lại trước khi Launch.`
@@ -517,7 +549,11 @@ export async function buildBulkLaunchPlan(creativeIds: string[], packageIds: str
             mediaCacheHitCount,
             mediaUploadNeededCount,
             estimatedYoutubeQuotaUnits,
-            exchangeRateVnd: settings.exchangeRateVnd
+            exchangeRateVnd: settings.exchangeRateVnd,
+            maxCampaignDailyBudgetUsd: config.maxCampaignDailyBudgetUsd,
+            maxBatchDailyBudgetUsd: config.maxBatchDailyBudgetUsd,
+            exceedsBudgetGuardrail,
+            guardrailReason
         },
         warnings,
         planPreview,

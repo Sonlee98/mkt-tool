@@ -433,10 +433,15 @@ class BulkLaunchWorker {
                 [job.id, JSON.stringify(adIds)]
             );
 
-            // Step 5: Activate Campaign & Register into Intraday `campaigns` + `intraday_hourly_metrics`
-            lastStep = 'ACTIVATING';
+            // Step 5: Activate Campaign (unless launchPaused guardrail is enabled) & Register into Intraday
+            const launchPaused = Boolean(batchMeta?.options?.launchPaused);
+            const finalCampaignStatus: 'ON' | 'OFF' = launchPaused ? 'OFF' : 'ON';
+
+            lastStep = launchPaused ? 'FINALIZING_PAUSED' : 'ACTIVATING';
             await this.updateStep(job.id, lastStep);
-            await activateCampaignStep(acc, bundle.channel, platformCampaignId);
+            if (!launchPaused) {
+                await activateCampaignStep(acc, bundle.channel, platformCampaignId);
+            }
 
             const tzNow = getNowInTz();
             const countriesText = bundle.campaignTemplate.is_worldwide || bundle.campaignTemplate.country_codes.length === 0
@@ -455,11 +460,11 @@ class BulkLaunchWorker {
                         id, external_campaign_id, product_id, ad_account_id, channel, marketer_id,
                         name, countries, daily_budget_vnd, status,
                         package_id, source_job_id, creative_ids, tactic_ids, updated_at
-                     ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,'ON',$10,$11,$12,$13,NOW())
+                     ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,NOW())
                      ON CONFLICT (id) DO UPDATE SET
                         name = EXCLUDED.name,
                         daily_budget_vnd = EXCLUDED.daily_budget_vnd,
-                        status = 'ON',
+                        status = EXCLUDED.status,
                         package_id = EXCLUDED.package_id,
                         source_job_id = EXCLUDED.source_job_id,
                         creative_ids = EXCLUDED.creative_ids,
@@ -475,6 +480,7 @@ class BulkLaunchWorker {
                         job.planned_campaign_name,
                         countriesText,
                         dailyBudgetVnd,
+                        finalCampaignStatus,
                         job.package_id,
                         job.id,
                         allCreativeIds,
@@ -525,13 +531,14 @@ class BulkLaunchWorker {
                 source: `Bulk Launcher (${bundle.channel} ${modeLabel})`,
                 statusCode: 200,
                 latencyMs: Math.max(20, Date.now() - startedAt),
-                message: `Tạo thành công chiến dịch ${job.planned_campaign_name} (${groupIds.length} AdGroups, ${adIds.length} Ads, Cache Hits: ${mediaResult.cacheHits})`,
+                message: `Tạo thành công chiến dịch ${job.planned_campaign_name} [${launchPaused ? 'PAUSED' : 'ACTIVE'}] (${groupIds.length} AdGroups, ${adIds.length} Ads, Cache Hits: ${mediaResult.cacheHits})`,
                 payloadSummary: {
                     batchId: job.batch_id,
                     jobId: job.id,
                     platformCampaignId,
                     channel: bundle.channel,
-                    cacheHits: mediaResult.cacheHits
+                    cacheHits: mediaResult.cacheHits,
+                    finalCampaignStatus
                 }
             });
 

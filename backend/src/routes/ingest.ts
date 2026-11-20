@@ -1,4 +1,5 @@
 import type { FastifyInstance } from 'fastify';
+import { config } from '../config.js';
 import {
     ingestMetricsBatch,
     parseCsvToMetrics,
@@ -6,6 +7,7 @@ import {
 } from '../services/ingestService.js';
 import { getIntradayReport } from '../services/intradayService.js';
 import { getAppSettings, setSystemSetting } from '../services/telemetryService.js';
+import { verifySecretConstantTime } from '../utils/cryptoVault.js';
 import { parseNumberSafe } from '../utils/time.js';
 
 function normalizeWebhookEvent(raw: Record<string, unknown>): MetricIngestItem {
@@ -44,8 +46,22 @@ function toGoogleSheetCsvUrl(rawUrl: string): string {
 }
 
 export async function ingestRoutes(app: FastifyInstance): Promise<void> {
-    // Standard Realtime Webhook Endpoint
+    // Standard Realtime Webhook Endpoint (protected by WEBHOOK_SECRET when configured)
     app.post<{ Params: { source: string }; Body: unknown }>('/api/v1/webhooks/:source', async (req, reply) => {
+        const expectedSecret = config.webhookSecret || (await getAppSettings()).webhookSecret;
+        if (expectedSecret) {
+            const authHeader = typeof req.headers.authorization === 'string' ? req.headers.authorization : '';
+            const bearerToken = authHeader.toLowerCase().startsWith('bearer ') ? authHeader.slice(7).trim() : '';
+            const customHeader = typeof req.headers['x-webhook-secret'] === 'string' ? req.headers['x-webhook-secret'].trim() : '';
+            const provided = bearerToken || customHeader;
+            if (!verifySecretConstantTime(provided, expectedSecret)) {
+                return reply.code(401).send({
+                    ok: false,
+                    error: 'Unauthorized: Thiếu hoặc sai WEBHOOK_SECRET.'
+                });
+            }
+        }
+
         const sourceParam = req.params.source || 'custom';
         const sourceMap: Record<string, string> = {
             facebook: 'Facebook Marketing Webhook',

@@ -16,7 +16,13 @@ async function fetchFormattedPackages() {
                    ad.name AS ad_template_name,
                    pg.name AS page_template_name,
                    acc.name AS ad_account_name,
-                   acc.access_token IS NOT NULL AND LENGTH(TRIM(acc.access_token)) > 0 AS has_token
+                   (
+                       NOT COALESCE((acc.api_config->>'sandboxOverride')::boolean, false)
+                       AND (
+                           (acc.access_token IS NOT NULL AND LENGTH(TRIM(acc.access_token)) > 0)
+                           OR (acc.channel = 'Google Ads' AND LENGTH(TRIM(COALESCE(acc.api_config->>'refresh_token', ''))) > 0)
+                       )
+                   ) AS has_token
             FROM packages p
             JOIN app_templates app ON app.id = p.app_template_id
             JOIN campaign_templates cam ON cam.id = p.campaign_template_id

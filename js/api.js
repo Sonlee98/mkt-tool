@@ -50,6 +50,10 @@
 
             try {
                 const headers = Object.assign({}, options.headers || {});
+                const adminKey = typeof localStorage !== 'undefined' ? (localStorage.getItem('apero_admin_key') || '').trim() : '';
+                if (adminKey && !headers['x-admin-key']) {
+                    headers['x-admin-key'] = adminKey;
+                }
                 if (options.body && typeof options.body === 'string' && !headers['Content-Type']) {
                     headers['Content-Type'] = 'application/json';
                 }
@@ -164,7 +168,7 @@
             });
         },
 
-        // Ad Accounts
+        // Ad Accounts & Security Guardrails
         getAdAccounts() {
             return this.request('/api/v1/ad-accounts');
         },
@@ -180,6 +184,24 @@
             return this.request(`/api/v1/ad-accounts/${encodeURIComponent(accountId)}/sync`, {
                 method: 'POST'
             });
+        },
+
+        getSecurityConfig() {
+            return this.request('/api/v1/admin/security');
+        },
+
+        saveSecurityConfig(payload) {
+            return this.request('/api/v1/admin/security', {
+                method: 'POST',
+                body: JSON.stringify(payload)
+            });
+        },
+
+        setAdminKey(key) {
+            if (typeof localStorage === 'undefined') return;
+            const trimmed = String(key || '').trim();
+            if (trimmed) localStorage.setItem('apero_admin_key', trimmed);
+            else localStorage.removeItem('apero_admin_key');
         },
 
         // Templates Management
@@ -233,11 +255,13 @@
 
         async uploadCreativeBinary(file, meta = {}) {
             const qs = this.buildQuery(Object.assign({ fileName: file.name }, meta));
+            const headers = { 'Content-Type': file.type || 'application/octet-stream' };
+            const adminKey = typeof localStorage !== 'undefined' ? (localStorage.getItem('apero_admin_key') || '').trim() : '';
+            if (adminKey) headers['x-admin-key'] = adminKey;
+
             const resp = await fetch(`${this.baseUrl}/api/v1/creatives/upload${qs}`, {
                 method: 'POST',
-                headers: {
-                    'Content-Type': file.type || 'application/octet-stream'
-                },
+                headers,
                 body: file
             });
             const data = await resp.json();

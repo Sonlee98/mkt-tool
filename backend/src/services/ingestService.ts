@@ -28,6 +28,8 @@ export interface MetricIngestItem {
     cohortRevVnd?: number;
     cutoffRevVnd?: number;
     installs?: number;
+    // Live Ad Network sync sets spend/installs without overwriting MMP cohort/cutoff revenue
+    preserveRevenue?: boolean;
 }
 
 function normalizeChannelName(ch?: string): string {
@@ -186,6 +188,24 @@ export async function ingestMetricsBatch(
                 spendDeltaTotal += sd;
                 revDeltaTotal += crd;
                 installsDeltaTotal += insd;
+            } else if (item.preserveRevenue) {
+                const absSpend = Math.round(parseNumberSafe(item.spendVnd, 0));
+                const absInstalls = Math.round(parseNumberSafe(item.installs, 0));
+
+                await client.query(
+                    `INSERT INTO intraday_hourly_metrics
+                        (metric_date, hour_slot, product_id, channel, campaign_id, country, spend_vnd, cohort_rev_vnd, cutoff_rev_vnd, installs, updated_at)
+                     VALUES ($1,$2,$3,$4,$5,$6,$7,0,0,$8,NOW())
+                     ON CONFLICT (metric_date, hour_slot, campaign_id, country)
+                     DO UPDATE SET
+                        spend_vnd = EXCLUDED.spend_vnd,
+                        installs = CASE WHEN EXCLUDED.installs > 0 THEN EXCLUDED.installs ELSE intraday_hourly_metrics.installs END,
+                        updated_at = NOW()`,
+                    [metricDate, hourSlot, resolved.productId, resolved.channel, resolved.campaignId, resolved.country, absSpend, absInstalls]
+                );
+
+                spendDeltaTotal += absSpend;
+                installsDeltaTotal += absInstalls;
             } else {
                 const absSpend = Math.round(parseNumberSafe(item.spendVnd, 0));
                 const absCohort = Math.round(parseNumberSafe(item.cohortRevVnd ?? item.revenueVnd, 0));

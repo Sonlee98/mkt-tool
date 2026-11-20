@@ -3,6 +3,8 @@ import path from 'node:path';
 import { pool } from '../db/pool.js';
 import { config } from '../config.js';
 import type { BulkChannel, CreativeRow, CreativeGroupAllocation } from '../services/batchPlanner.js';
+import { decryptSecret } from '../utils/cryptoVault.js';
+import { hasAccountLiveCredentials, resolveGoogleBearerToken } from '../utils/googleOAuth.js';
 
 export interface LaunchAccountInfo {
     id: string;
@@ -79,7 +81,25 @@ function sleep(ms: number): Promise<void> {
 }
 
 export function isLiveModeAccount(acc: LaunchAccountInfo): boolean {
-    return Boolean(acc.access_token && acc.access_token.trim().length > 0 && !acc.api_config?.sandboxOverride);
+    return hasAccountLiveCredentials(acc);
+}
+
+function getCleanGoogleCid(accountId: string): string {
+    return accountId.replace(/^act_/, '').replace(/-/g, '').trim();
+}
+
+function buildGoogleHeaders(acc: LaunchAccountInfo, bearerToken: string): Record<string, string> {
+    const devToken = String(acc.api_config?.developer_token || config.googleAdsDeveloperToken || '').trim();
+    const loginCid = acc.api_config?.login_customer_id
+        ? String(acc.api_config.login_customer_id).replace(/-/g, '').trim()
+        : '';
+
+    return {
+        'Authorization': `Bearer ${bearerToken}`,
+        'developer-token': devToken,
+        ...(loginCid ? { 'login-customer-id': loginCid } : {}),
+        'Content-Type': 'application/json'
+    };
 }
 
 async function checkMetaUsageAndBackoff(accountId: string, headers: Headers): Promise<void> {
@@ -173,7 +193,10 @@ export async function resolveJobMedia(
 
                 let fbVideoId: string;
                 if (isLive) {
-                    const token = acc.access_token!.trim();
+                    const token = decryptSecret(acc.access_token);
+                    if (!token) {
+                        throw new BulkAdapterError('Thiếu Meta Access Token cho tài khoản.', 'MISSING_TOKEN', false);
+                    }
                     const publicBase = process.env.PUBLIC_MEDIA_BASE_URL?.trim();
                     if (publicBase && cr.public_url) {
                         const res = await graphFetch(acc.id, `${acc.id}/advideos`, token, {
@@ -269,17 +292,12 @@ export async function resolveJobMedia(
 
                 let assetRn = assetCache.rows[0]?.status === 'READY' ? assetCache.rows[0].remote_asset_rn : null;
                 if (!assetRn) {
-                    const cleanCid = acc.id.replace(/^act_/, '').replace(/-/g, '');
+                    const cleanCid = getCleanGoogleCid(acc.id);
                     if (isLive) {
-                        const devToken = String(acc.api_config?.developer_token || process.env.GOOGLE_ADS_DEVELOPER_TOKEN || '');
+                        const bearerToken = await resolveGoogleBearerToken(acc);
                         const resp = await fetch(`https://googleads.googleapis.com/v18/customers/${cleanCid}/assets:mutate`, {
                             method: 'POST',
-                            headers: {
-                                'Authorization': `Bearer ${acc.access_token!.trim()}`,
-                                'developer-token': devToken,
-                                ...(acc.api_config?.login_customer_id ? { 'login-customer-id': String(acc.api_config.login_customer_id) } : {}),
-                                'Content-Type': 'application/json'
-                            },
+                            headers: buildGoogleHeaders(acc, bearerToken),
                             body: JSON.stringify({
                                 operations: [{
                                     create: {
@@ -339,7 +357,10 @@ export async function createPausedCampaignStep(
             await sleep(160);
             return { platformCampaignId: `sbx_fb_${Date.now().toString(36)}_${Math.floor(Math.random() * 999)}` };
         }
-        const token = acc.access_token!.trim();
+        const token = decryptSecret(acc.access_token);
+        if (!token) {
+            throw new BulkAdapterError('Thiếu Meta Access Token cho tài khoản.', 'MISSING_TOKEN', false);
+        }
         const isUsdAcc = acc.currency.toUpperCase() === 'USD';
         const budgetInAccUnit = isUsdAcc
             ? Math.max(100, Math.round((dailyBudgetVnd / exchangeRate) * 100))
@@ -357,10 +378,10 @@ export async function createPausedCampaignStep(
         return { platformCampaignId: String(res.id) };
     }
 
-    // Google Ads UAC: Sandbox creates logical ID; Live API creates Atomic Batch in createAdGroupsStep or Budget+Campaign here
+    // Google Ads UAC: Sandbox creates logical ID; Live API creates Atomic Batch
     if (!isLive) {
         await sleep(170);
-        const cleanCid = acc.id.replace(/^act_/, '');
+        const cleanCid = getCleanGoogleCid(acc.id);
         const randId = `${Date.now().toString().slice(-6)}${Math.floor(100 + Math.random() * 899)}`;
         return {
             platformCampaignId: `sbx_gg_${randId}`,
@@ -368,14 +389,9 @@ export async function createPausedCampaignStep(
         };
     }
 
-    const cleanCid = acc.id.replace(/^act_/, '');
-    const devToken = String(acc.api_config?.developer_token || process.env.GOOGLE_ADS_DEVELOPER_TOKEN || '');
-    const headers = {
-        'Authorization': `Bearer ${acc.access_token!.trim()}`,
-        'developer-token': devToken,
-        ...(acc.api_config?.login_customer_id ? { 'login-customer-id': String(acc.api_config.login_customer_id) } : {}),
-        'Content-Type': 'application/json'
-    };
+    const cleanCid = getCleanGoogleCid(acc.id);
+    const bearerToken = await resolveGoogleBearerToken(acc);
+    const headers = buildGoogleHeaders(acc, bearerToken);
 
     const budgetMicros = String(
         acc.currency.toUpperCase() === 'USD'
@@ -457,7 +473,10 @@ export async function createAdGroupsStep(
         }
 
         if (bundle.channel === 'Facebook') {
-            const token = acc.access_token!.trim();
+            const token = decryptSecret(acc.access_token);
+            if (!token) {
+                throw new BulkAdapterError('Thiếu Meta Access Token cho tài khoản.', 'MISSING_TOKEN', false);
+            }
             const countries = bundle.campaignTemplate.is_worldwide || bundle.campaignTemplate.country_codes.length === 0
                 ? ['US', 'CA', 'AU', 'GB', 'IN']
                 : bundle.campaignTemplate.country_codes;
@@ -484,16 +503,11 @@ export async function createAdGroupsStep(
             });
             groupIds.push(String(res.id));
         } else {
-            const cleanCid = acc.id.replace(/^act_/, '');
-            const devToken = String(acc.api_config?.developer_token || process.env.GOOGLE_ADS_DEVELOPER_TOKEN || '');
+            const cleanCid = getCleanGoogleCid(acc.id);
+            const bearerToken = await resolveGoogleBearerToken(acc);
             const resp = await fetch(`https://googleads.googleapis.com/v18/customers/${cleanCid}/adGroups:mutate`, {
                 method: 'POST',
-                headers: {
-                    'Authorization': `Bearer ${acc.access_token!.trim()}`,
-                    'developer-token': devToken,
-                    ...(acc.api_config?.login_customer_id ? { 'login-customer-id': String(acc.api_config.login_customer_id) } : {}),
-                    'Content-Type': 'application/json'
-                },
+                headers: buildGoogleHeaders(acc, bearerToken),
                 body: JSON.stringify({
                     operations: [{
                         create: {
@@ -528,6 +542,10 @@ export async function createAdsStep(
     const adIds = [...existingAdIds];
 
     if (bundle.channel === 'Facebook') {
+        const fbToken = isLive ? decryptSecret(acc.access_token) : null;
+        if (isLive && !fbToken) {
+            throw new BulkAdapterError('Thiếu Meta Access Token cho tài khoản.', 'MISSING_TOKEN', false);
+        }
         let totalExpectedIdx = 0;
         for (let gIdx = 0; gIdx < allocations.length; gIdx++) {
             const grp = allocations[gIdx];
@@ -544,14 +562,13 @@ export async function createAdsStep(
                     continue;
                 }
 
-                const token = acc.access_token!.trim();
                 const media = mediaResult.mediaByCreativeId.get(crId);
                 const copy = bundle.adTemplate.copy_payload || {};
                 const bodies = ((copy.primary_texts as string[]) || ['Download app now!']).map(text => ({ text }));
                 const titles = ((copy.headlines as string[]) || ['Try AI Video Maker']).map(text => ({ text }));
                 const descriptions = ((copy.descriptions as string[]) || ['5M+ creators']).map(text => ({ text }));
 
-                const creativeRes = await graphFetch(acc.id, `${acc.id}/adcreatives`, token, {
+                const creativeRes = await graphFetch(acc.id, `${acc.id}/adcreatives`, fbToken!, {
                     name: `${campaignName}_Cr_${totalExpectedIdx + 1}`,
                     object_story_spec: {
                         page_id: bundle.pageTemplate?.page_id
@@ -567,7 +584,7 @@ export async function createAdsStep(
                     }
                 });
 
-                const adRes = await graphFetch(acc.id, `${acc.id}/ads`, token, {
+                const adRes = await graphFetch(acc.id, `${acc.id}/ads`, fbToken!, {
                     name: `${campaignName}_Ad_${totalExpectedIdx + 1}`,
                     adset_id: adSetId,
                     creative: { creative_id: String(creativeRes.id) },
@@ -590,8 +607,8 @@ export async function createAdsStep(
             continue;
         }
 
-        const cleanCid = acc.id.replace(/^act_/, '');
-        const devToken = String(acc.api_config?.developer_token || process.env.GOOGLE_ADS_DEVELOPER_TOKEN || '');
+        const cleanCid = getCleanGoogleCid(acc.id);
+        const bearerToken = await resolveGoogleBearerToken(acc);
         const copyGroups = (bundle.adTemplate.copy_payload?.groups as Array<{ headlines: string[]; descriptions: string[] }>) || [];
         const pickedCopy = copyGroups[gIdx % Math.max(1, copyGroups.length)] || {
             headlines: ['AI Video Generator', 'Create Videos Fast'],
@@ -605,12 +622,7 @@ export async function createAdsStep(
 
         const resp = await fetch(`https://googleads.googleapis.com/v18/customers/${cleanCid}/adGroupAds:mutate`, {
             method: 'POST',
-            headers: {
-                'Authorization': `Bearer ${acc.access_token!.trim()}`,
-                'developer-token': devToken,
-                ...(acc.api_config?.login_customer_id ? { 'login-customer-id': String(acc.api_config.login_customer_id) } : {}),
-                'Content-Type': 'application/json'
-            },
+            headers: buildGoogleHeaders(acc, bearerToken),
             body: JSON.stringify({
                 operations: [{
                     create: {
@@ -637,6 +649,32 @@ export async function createAdsStep(
     return adIds;
 }
 
+async function setGoogleCampaignStatus(
+    acc: LaunchAccountInfo,
+    platformCampaignId: string,
+    targetStatus: 'ENABLED' | 'PAUSED'
+): Promise<void> {
+    const cleanCid = getCleanGoogleCid(acc.id);
+    const bearerToken = await resolveGoogleBearerToken(acc);
+    const resp = await fetch(`https://googleads.googleapis.com/v18/customers/${cleanCid}/campaigns:mutate`, {
+        method: 'POST',
+        headers: buildGoogleHeaders(acc, bearerToken),
+        body: JSON.stringify({
+            operations: [{
+                update: {
+                    resourceName: `customers/${cleanCid}/campaigns/${platformCampaignId}`,
+                    status: targetStatus
+                },
+                updateMask: 'status'
+            }]
+        })
+    });
+    if (!resp.ok) {
+        const json = await resp.json() as { error?: { message?: string } };
+        throw new BulkAdapterError(json.error?.message || `Google Status HTTP ${resp.status}`, `GOOGLE_${resp.status}`, resp.status === 429);
+    }
+}
+
 export async function activateCampaignStep(
     acc: LaunchAccountInfo,
     channel: BulkChannel,
@@ -648,34 +686,42 @@ export async function activateCampaignStep(
     }
 
     if (channel === 'Facebook') {
-        await graphFetch(acc.id, platformCampaignId, acc.access_token!.trim(), {
+        const token = decryptSecret(acc.access_token);
+        if (!token) throw new BulkAdapterError('Thiếu Meta Access Token cho tài khoản.', 'MISSING_TOKEN', false);
+        await graphFetch(acc.id, platformCampaignId, token, {
             status: 'ACTIVE'
         });
         return;
     }
 
-    const cleanCid = acc.id.replace(/^act_/, '');
-    const devToken = String(acc.api_config?.developer_token || process.env.GOOGLE_ADS_DEVELOPER_TOKEN || '');
-    const resp = await fetch(`https://googleads.googleapis.com/v18/customers/${cleanCid}/campaigns:mutate`, {
-        method: 'POST',
-        headers: {
-            'Authorization': `Bearer ${acc.access_token!.trim()}`,
-            'developer-token': devToken,
-            ...(acc.api_config?.login_customer_id ? { 'login-customer-id': String(acc.api_config.login_customer_id) } : {}),
-            'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-            operations: [{
-                update: {
-                    resourceName: `customers/${cleanCid}/campaigns/${platformCampaignId}`,
-                    status: 'ENABLED'
-                },
-                updateMask: 'status'
-            }]
-        })
-    });
-    if (!resp.ok) {
-        const json = await resp.json() as { error?: { message?: string } };
-        throw new BulkAdapterError(json.error?.message || `Google Activate HTTP ${resp.status}`, `GOOGLE_${resp.status}`, resp.status === 429);
+    await setGoogleCampaignStatus(acc, platformCampaignId, 'ENABLED');
+}
+
+export async function setPlatformCampaignStatus(
+    acc: LaunchAccountInfo,
+    channel: string,
+    externalCampaignId: string,
+    nextStatus: 'ON' | 'OFF'
+): Promise<{ syncedLive: boolean }> {
+    if (
+        !isLiveModeAccount(acc) ||
+        !externalCampaignId ||
+        externalCampaignId.startsWith('#') ||
+        externalCampaignId.startsWith('sbx_') ||
+        (channel !== 'Facebook' && channel !== 'Google Ads')
+    ) {
+        return { syncedLive: false };
     }
+
+    if (channel === 'Facebook') {
+        const token = decryptSecret(acc.access_token);
+        if (!token) return { syncedLive: false };
+        await graphFetch(acc.id, externalCampaignId, token, {
+            status: nextStatus === 'ON' ? 'ACTIVE' : 'PAUSED'
+        });
+        return { syncedLive: true };
+    }
+
+    await setGoogleCampaignStatus(acc, externalCampaignId, nextStatus === 'ON' ? 'ENABLED' : 'PAUSED');
+    return { syncedLive: true };
 }
